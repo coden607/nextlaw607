@@ -47,6 +47,11 @@ const ready = await page.evaluate(async () => {
 });
 if (!ready) throw new Error("service worker did not become ready");
 
+const performance = await page.evaluate(() => ({ ...window.__nextlawVitals }));
+for (const key of ["lcp_ms", "cls", "inp_ms"]) {
+  if (!Number.isFinite(performance[key])) performance[key] = 0;
+}
+
 await context.setOffline(true);
 let offlinePassed = true;
 try {
@@ -56,11 +61,6 @@ try {
   offlinePassed = false;
 }
 await context.setOffline(false);
-
-const performance = await page.evaluate(() => ({ ...window.__nextlawVitals }));
-for (const key of ["lcp_ms", "cls", "inp_ms"]) {
-  if (!Number.isFinite(performance[key])) performance[key] = 0;
-}
 
 const evidence = {
   revision,

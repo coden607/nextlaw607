@@ -60,3 +60,8 @@ def test_service_worker_precaches_complete_initial_module_graph():
     sw = (ROOT / "apps" / "web" / "sw.js").read_text(encoding="utf-8")
     for asset in ("/dist/main.js", "/dist/domain.js", "/dist/storage.js", "/dist/caseguardian.js"):
         assert asset in sw
+
+
+def test_browser_performance_is_snapshotted_before_offline_reload():
+    script = (ROOT / "apps" / "web" / "scripts" / "browser-evidence.mjs").read_text(encoding="utf-8")
+    assert script.index("const performance = await page.evaluate") < script.index("await context.setOffline(true)")
