@@ -2,6 +2,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from datetime import date
 from enum import Enum
+from .sources import SourceRegistry
 
 class AuthorityStatus(str, Enum):
     GOOD_LAW = "good_law"
@@ -48,7 +49,17 @@ class CitationFirewall:
         for name in ("citation", "title", "court", "jurisdiction", "holding", "source_url"):
             if not getattr(authority, name): reasons.append(f"missing {name}")
         if authority.status is not AuthorityStatus.GOOD_LAW: reasons.append("authority not confirmed good law")
-        if authority.source_tier is SourceTier.SECONDARY: reasons.append("secondary source cannot verify authority")
+        if authority.source_tier is SourceTier.SECONDARY:
+            reasons.append("secondary source cannot verify authority")
+        registry = SourceRegistry()
+        official_text_verified = registry.is_official_url(authority.source_url, authority.jurisdiction)
+        if not official_text_verified:
+            official_text_verified = any(
+                registry.is_official_url(source, authority.jurisdiction)
+                for source in authority.verification_sources
+            )
+        if not official_text_verified:
+            reasons.append("official source text not verified")
         if not authority.verification_sources: reasons.append("no verification source")
         if authority.last_verified_on is None:
             reasons.append("never verified")

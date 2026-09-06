@@ -36,12 +36,19 @@ class CriminalCaseState:
     events: list[CaseEvent] = field(default_factory=list)
     unresolved_issues: list[str] = field(default_factory=list)
     next_appearance: datetime | None = None
+    next_appearance_source: str | None = None
 
     def record(self, event: CaseEvent) -> None:
         if self.events and event.occurred_at < self.events[-1].occurred_at:
             raise ValueError("events must be recorded in chronological order")
         self.events.append(event)
         self.stage = event.stage
+
+    def set_next_appearance(self, when: datetime, *, source: str) -> None:
+        if not source.strip():
+            raise ValueError("next appearance requires a source")
+        self.next_appearance = when
+        self.next_appearance_source = source.strip()
 
     def next_actions(self) -> tuple[str, ...]:
         common = ("Preserve all court papers, release conditions, discovery, and attorney communications you choose to store.",)
@@ -62,4 +69,14 @@ class CriminalCaseState:
             ProcedureStage.APPEAL: ("Preserve notices, deadlines, transcripts, orders, and issues identified by appellate counsel.",),
             ProcedureStage.POST_CONVICTION: ("Organize the record, prior rulings, newly discovered evidence, and counsel-reviewed grounds.",),
         }
-        return stage_actions[self.stage] + common
+        appearance: tuple[str, ...] = ()
+        if self.next_appearance is not None:
+            if self.next_appearance_source:
+                appearance = (
+                    f"Verified next appearance: {self.next_appearance.isoformat()} — source: {self.next_appearance_source}.",
+                )
+            else:
+                appearance = (
+                    "An unverified next-appearance date is stored; confirm it against court or counsel paperwork before relying on it.",
+                )
+        return stage_actions[self.stage] + appearance + common

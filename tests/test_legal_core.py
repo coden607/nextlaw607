@@ -116,3 +116,44 @@ def test_questioning_after_counsel_request_flags_issue_without_declaring_suppres
 def test_identification_procedure_flags_wade_showup_review_without_outcome_claim():
     issues = SuppressionAnalyzer().analyze(SuppressionFacts(identification_procedure=True))
     assert any(i.code == "identification_procedure" for i in issues)
+
+
+def test_claimed_official_source_must_match_registered_official_domain():
+    candidate = auth(source_url="https://example.com/not-official")
+    decision = CitationFirewall().verify(candidate)
+    assert not decision.verified
+    assert any("official source" in reason for reason in decision.reasons)
+
+
+def test_repository_copy_can_pass_when_official_text_was_cross_checked():
+    candidate = auth(
+        source_url="https://www.courtlistener.com/opinion/123/example/",
+        source_tier=SourceTier.REPOSITORY,
+        verification_sources=("https://www.nycourts.gov/reporter/3dseries/2024/example.htm",),
+        history_sources=("https://www.courtlistener.com/opinion/123/example/",),
+    )
+    assert CitationFirewall().verify(candidate).verified
+
+
+def test_next_appearance_without_source_fails_closed_in_actions():
+    case = CriminalCaseState(
+        "m1",
+        "NY",
+        stage=ProcedureStage.PRETRIAL,
+        next_appearance=datetime(2026, 10, 1, tzinfo=timezone.utc),
+    )
+    text = " ".join(case.next_actions()).lower()
+    assert "unverified" in text
+    assert "confirm" in text
+    assert "2026" not in text
+
+
+def test_next_appearance_with_source_can_be_safely_surfaced():
+    case = CriminalCaseState("m1", "NY", stage=ProcedureStage.PRETRIAL)
+    case.set_next_appearance(
+        datetime(2026, 10, 1, 9, 30, tzinfo=timezone.utc),
+        source="court notice dated 2026-09-20",
+    )
+    text = " ".join(case.next_actions()).lower()
+    assert "2026-10-01" in text
+    assert "court notice" in text

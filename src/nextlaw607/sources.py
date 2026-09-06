@@ -1,5 +1,6 @@
 from __future__ import annotations
 from dataclasses import dataclass
+from urllib.parse import urlparse
 
 @dataclass(frozen=True)
 class LegalSource:
@@ -21,3 +22,20 @@ class SourceRegistry:
 
     def ordered_for(self, jurisdiction: str) -> list[LegalSource]:
         return sorted(self.sources, key=lambda s: ((s.jurisdiction == jurisdiction), s.official, s.rank), reverse=True)
+
+    def is_official_url(self, url: str, jurisdiction: str | None = None) -> bool:
+        host = (urlparse(url).hostname or "").lower()
+        if not host:
+            return False
+        for source in self.sources:
+            if not source.official:
+                continue
+            if jurisdiction is not None and source.jurisdiction != jurisdiction:
+                continue
+            official_host = (urlparse(source.base_url).hostname or "").lower()
+            if not official_host:
+                continue
+            root = official_host[4:] if official_host.startswith("www.") else official_host
+            if host == official_host or host == root or host.endswith("." + root):
+                return True
+        return False
