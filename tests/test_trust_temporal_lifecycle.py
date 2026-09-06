@@ -1,7 +1,9 @@
 from datetime import date, datetime, timedelta, timezone
 
+import pytest
+
 from nextlaw607.authority import AuthorityStatus, CitationFirewall, LegalAuthority, SourceTier
-from nextlaw607.procedure import CriminalCaseState, ProcedureStage
+from nextlaw607.procedure import CaseEvent, CriminalCaseState, ProcedureStage
 
 
 def _authority(**changes):
@@ -76,3 +78,29 @@ def test_deadline_actions_keep_future_source_backed_deadline_upcoming():
     text = " ".join(actions).lower()
     assert "upcoming source-backed deadline" in text
     assert "docket entry" in text
+
+
+def test_past_dated_verified_appearance_requires_current_recheck():
+    case = CriminalCaseState("m1", "NY", stage=ProcedureStage.PRETRIAL)
+    case.set_next_appearance(
+        datetime(2026, 9, 5, 9, 0, tzinfo=timezone.utc),
+        source="court notice dated 2026-09-01",
+        source_kind="court_notice",
+    )
+    actions = case.next_actions(as_of=datetime(2026, 9, 6, 12, 0, tzinfo=timezone.utc))
+    text = " ".join(actions).lower()
+    assert "past-dated verified appearance" in text
+    assert "re-check current court or counsel source" in text
+    assert "court notice dated 2026-09-01" in text
+
+
+def test_record_rejects_event_timestamp_after_explicit_as_of():
+    case = CriminalCaseState("m1", "NY")
+    event = CaseEvent(
+        stage=ProcedureStage.ARRAIGNMENT,
+        occurred_at=datetime(2026, 9, 7, 9, 0, tzinfo=timezone.utc),
+        title="arraignment",
+        source="court minute entry",
+    )
+    with pytest.raises(ValueError, match="event timestamp is in the future"):
+        case.record(event, as_of=datetime(2026, 9, 6, 12, 0, tzinfo=timezone.utc))
