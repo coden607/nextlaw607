@@ -191,3 +191,63 @@ def test_next_appearance_accepts_court_or_counsel_source_kinds():
             source_kind=source_kind,
         )
         assert "Verified next appearance" in " ".join(case.next_actions())
+
+
+def test_source_registry_distinguishes_citation_history_from_statute_text():
+    registry = SourceRegistry()
+    supports = getattr(registry, "supports", None)
+    assert supports is not None, "SourceRegistry.supports is required"
+    assert supports("https://legislation.nysenate.gov/laws/CPL/1.20", "primary_text", "NY")
+    assert not supports("https://legislation.nysenate.gov/laws/CPL/1.20", "citation_history", "NY")
+    assert supports("https://www.courtlistener.com/opinion/123/example/", "citation_history", "NY")
+
+
+def test_citation_firewall_rejects_registered_source_without_history_capability():
+    candidate = auth(history_sources=("https://legislation.nysenate.gov/laws/CPL/1.20",))
+    decision = CitationFirewall().verify(candidate)
+    assert not decision.verified
+    assert any("citation history source" in reason for reason in decision.reasons)
+
+
+def test_case_deadline_requires_classified_provenance_and_surfaces_source():
+    case = CriminalCaseState("m1", "NY", stage=ProcedureStage.MOTIONS)
+    add_deadline = getattr(case, "add_deadline", None)
+    assert add_deadline is not None, "CriminalCaseState.add_deadline is required"
+    add_deadline(
+        "motion filing",
+        datetime(2026, 10, 15, 17, 0, tzinfo=timezone.utc),
+        source="court scheduling order dated 2026-09-25",
+        source_kind="court_notice",
+    )
+    text = " ".join(case.next_actions()).lower()
+    assert "2026-10-15" in text
+    assert "motion filing" in text
+    assert "court scheduling order" in text
+
+
+def test_case_deadline_rejects_unclassified_source_and_sorts_chronologically():
+    import pytest
+
+    case = CriminalCaseState("m1", "NY", stage=ProcedureStage.PRETRIAL)
+    add_deadline = getattr(case, "add_deadline", None)
+    assert add_deadline is not None, "CriminalCaseState.add_deadline is required"
+    with pytest.raises(ValueError):
+        add_deadline(
+            "unknown deadline",
+            datetime(2026, 11, 1, tzinfo=timezone.utc),
+            source="someone said so",
+            source_kind="friend_message",
+        )
+    add_deadline(
+        "later filing",
+        datetime(2026, 11, 10, tzinfo=timezone.utc),
+        source="counsel confirmation",
+        source_kind="counsel_confirmation",
+    )
+    add_deadline(
+        "earlier filing",
+        datetime(2026, 11, 2, tzinfo=timezone.utc),
+        source="docket entry",
+        source_kind="docket",
+    )
+    assert [deadline.title for deadline in case.deadlines] == ["earlier filing", "later filing"]
