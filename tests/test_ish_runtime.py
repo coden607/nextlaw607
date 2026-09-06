@@ -30,3 +30,17 @@ def test_fallback_api_matches_health_and_live_contract():
 def test_dev_launcher_has_standard_library_api_fallback():
     text = (ROOT / "scripts" / "dev.sh").read_text(encoding="utf-8")
     assert "api_fallback.py" in text
+
+
+def test_all_shipped_python_parses_as_python39():
+    import ast
+    for base in (ROOT / "src", ROOT / "services", ROOT / "scripts"):
+        for path in base.rglob("*.py"):
+            source = path.read_text(encoding="utf-8")
+            ast.parse(source, filename=str(path), feature_version=(3, 9))
+
+
+def test_ish_bootstrap_does_not_require_optional_fastapi_stack():
+    text = (ROOT / "scripts" / "ish-bootstrap.sh").read_text(encoding="utf-8")
+    assert "pip install" not in text
+    assert "api_fallback.py" in (ROOT / "scripts" / "dev.sh").read_text(encoding="utf-8")

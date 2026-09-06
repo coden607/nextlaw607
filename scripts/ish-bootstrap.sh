@@ -2,11 +2,21 @@
 set -eu
 ROOT=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 cd "$ROOT"
-command -v apk >/dev/null 2>&1 && apk add --no-cache python3 py3-pip nodejs npm git ca-certificates || true
-python3 -m venv .venv 2>/dev/null || true
-if [ -f .venv/bin/activate ]; then . .venv/bin/activate; fi
-python -m pip install --upgrade pip
-python -m pip install -e . fastapi uvicorn httpx pytest
+
+if command -v apk >/dev/null 2>&1; then
+  apk add --no-cache python3 nodejs npm git ca-certificates
+fi
+
 npm --prefix apps/web install --no-audit --no-fund
-./scripts/verify.sh
-printf '\nInstalled. Run: ./scripts/dev.sh\n'
+
+PYTHONPATH="$ROOT/src:$ROOT" python3 - <<'PY'
+from services.api.fallback import dispatch
+status, body = dispatch("GET", "/status/live", None)
+assert status == 200 and body == {"status": "live"}
+status, body = dispatch("POST", "/api/live", {"mode": "search", "user_goal": "protect my rights"})
+assert status == 200 and body.get("verified_authority") is False
+print("NextLaw607 fallback API smoke PASS")
+PY
+
+npm --prefix apps/web run build
+printf '\nNextLaw607 iSH bootstrap PASS\nRun: ./scripts/dev.sh\nOpen: http://127.0.0.1:4173\n'
