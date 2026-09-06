@@ -91,7 +91,7 @@ class CriminalCaseState:
         )
         self.deadlines.sort(key=lambda deadline: deadline.due_at)
 
-    def next_actions(self) -> tuple[str, ...]:
+    def next_actions(self, *, as_of: datetime | None = None) -> tuple[str, ...]:
         common = (
             "Preserve all court papers, release conditions, discovery, and attorney communications you choose to store.",
         )
@@ -122,8 +122,13 @@ class CriminalCaseState:
                 appearance = (
                     "An unverified next-appearance date is stored; confirm it against court or counsel paperwork before relying on it.",
                 )
-        deadlines = tuple(
-            f"Source-backed deadline: {deadline.title}: {deadline.due_at.isoformat()} — source: {deadline.source}."
-            for deadline in self.deadlines
-        )
-        return stage_actions[self.stage] + appearance + deadlines + common
+
+        deadline_actions: list[str] = []
+        for deadline in self.deadlines:
+            label = "Source-backed deadline"
+            if as_of is not None:
+                label = "OVERDUE source-backed deadline" if deadline.due_at < as_of else "Upcoming source-backed deadline"
+            deadline_actions.append(
+                f"{label}: {deadline.title}: {deadline.due_at.isoformat()} — source: {deadline.source}."
+            )
+        return stage_actions[self.stage] + appearance + tuple(deadline_actions) + common
