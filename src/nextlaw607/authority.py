@@ -2,6 +2,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from datetime import date
 from enum import Enum
+from urllib.parse import urlparse
 from .sources import SourceCapability, SourceRegistry
 
 
@@ -47,6 +48,11 @@ class VerificationDecision:
 class CitationFirewall:
     def __init__(self, max_age_days: int = 90) -> None:
         self.max_age_days = max_age_days
+
+    @staticmethod
+    def _source_host(url: str) -> str:
+        host = (urlparse(url).hostname or "").lower()
+        return host[4:] if host.startswith("www.") else host
 
     def verify(self, authority: LegalAuthority, *, today: date | None = None) -> VerificationDecision:
         today = today or date.today()
@@ -114,6 +120,10 @@ class CitationFirewall:
             for source in authority.history_sources
         ):
             reasons.append("citation history source lacks citation-history capability")
+        elif len(authority.history_sources) > 1 and len(
+            {self._source_host(source) for source in authority.history_sources}
+        ) != len(authority.history_sources):
+            reasons.append("citation history sources are not independent")
 
         if reasons:
             return VerificationDecision(False, "UNVERIFIED — DO NOT CITE", tuple(reasons))
