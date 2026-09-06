@@ -54,3 +54,9 @@ def test_browser_evidence_workflow_captures_before_release_verification():
     assert "upload-artifact" in text
     assert "continue-on-error: true" in text
     assert "include-hidden-files: true" in text
+
+
+def test_service_worker_precaches_complete_initial_module_graph():
+    sw = (ROOT / "apps" / "web" / "sw.js").read_text(encoding="utf-8")
+    for asset in ("/dist/main.js", "/dist/domain.js", "/dist/storage.js", "/dist/caseguardian.js"):
+        assert asset in sw
