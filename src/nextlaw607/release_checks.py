@@ -74,3 +74,35 @@ def pwa_issues(root: Path) -> List[str]:
     if index.is_file() and 'rel="manifest"' not in index.read_text(encoding="utf-8"):
         issues.append("manifest link missing from index.html")
     return issues
+
+
+def browser_evidence_issues(root: Path, *, metadata: dict, revision: str) -> List[str]:
+    """Validate browser evidence for the exact revision; any missing proof fails closed."""
+    root = Path(root)
+    evidence_path = root / ".continuity" / "browser-evidence.json"
+    if not evidence_path.is_file():
+        return ["missing browser evidence"]
+    try:
+        evidence = json.loads(evidence_path.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError):
+        return ["invalid browser evidence JSON"]
+
+    issues: List[str] = []
+    if evidence.get("revision") != revision:
+        issues.append("browser evidence revision does not match checked-out revision")
+    if not evidence.get("captured_at"):
+        issues.append("browser evidence missing capture timestamp")
+    if not evidence.get("tool"):
+        issues.append("browser evidence missing tool provenance")
+    for gate in ("e2e_passed", "accessibility_passed", "pwa_passed"):
+        if evidence.get(gate) is not True:
+            issues.append(f"browser evidence gate failed or missing: {gate}")
+
+    performance = evidence.get("performance") or {}
+    for metric, limit in (metadata.get("performance_budgets") or {}).items():
+        value = performance.get(metric)
+        if not isinstance(value, (int, float)):
+            issues.append(f"browser performance metric missing: {metric}")
+        elif value > float(limit):
+            issues.append(f"browser performance budget exceeded: {metric}={value} > {limit}")
+    return issues

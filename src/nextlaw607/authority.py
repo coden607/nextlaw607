@@ -75,6 +75,8 @@ class CitationFirewall:
             reasons.append("negative treatment found")
         if not authority.history_sources:
             reasons.append("no citation history source")
+        elif not any(registry.is_registered_url(source) for source in authority.history_sources):
+            reasons.append("citation history source is not a registered research source")
         if reasons:
             return VerificationDecision(False, "UNVERIFIED — DO NOT CITE", tuple(reasons))
         return VerificationDecision(True, "VERIFIED", ())

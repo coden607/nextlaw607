@@ -39,3 +39,15 @@ class SourceRegistry:
             if host == official_host or host == root or host.endswith("." + root):
                 return True
         return False
+    def is_registered_url(self, url: str) -> bool:
+        host = (urlparse(url).hostname or "").lower()
+        if not host:
+            return False
+        for source in self.sources:
+            source_host = (urlparse(source.base_url).hostname or "").lower()
+            if not source_host:
+                continue
+            root = source_host[4:] if source_host.startswith("www.") else source_host
+            if host == source_host or host == root or host.endswith("." + root):
+                return True
+        return False

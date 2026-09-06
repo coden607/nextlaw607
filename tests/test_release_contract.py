@@ -28,3 +28,15 @@ def test_verification_metadata_is_not_gitignored():
         check=False,
     )
     assert result.returncode != 0
+
+
+def test_every_declared_gate_has_a_command():
+    payload = json.loads((ROOT / ".continuity" / "verification.json").read_text(encoding="utf-8"))
+    missing = [gate for gate in payload["gates"] if gate not in payload["commands"]]
+    assert missing == []
+
+
+def test_release_verifier_enforces_browser_evidence_gate():
+    script = (ROOT / "scripts" / "verify.sh").read_text(encoding="utf-8")
+    assert "browser-evidence-check.py" in script
+    assert (ROOT / "scripts" / "browser-evidence-check.py").is_file()

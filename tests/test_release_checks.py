@@ -29,3 +29,53 @@ def test_pwa_check_requires_manifest_service_worker_and_registration(tmp_path: P
     (web / "sw.js").write_text("self.addEventListener('fetch',()=>{})", encoding="utf-8")
     (web / "index.html").write_text('<link rel="manifest" href="/manifest.webmanifest"><script>navigator.serviceWorker.register("/sw.js")</script>', encoding="utf-8")
     assert pwa_issues(tmp_path) == []
+
+
+def test_browser_evidence_fails_closed_when_missing(tmp_path: Path):
+    from nextlaw607.release_checks import browser_evidence_issues
+    metadata = {"performance_budgets": {"lcp_ms": 2500, "cls": 0.1, "inp_ms": 200}}
+    issues = browser_evidence_issues(tmp_path, metadata=metadata, revision="abc123")
+    assert "missing browser evidence" in issues
+
+
+def test_browser_evidence_requires_exact_revision_and_all_browser_gates(tmp_path: Path):
+    import json
+    from nextlaw607.release_checks import browser_evidence_issues
+    continuity = tmp_path / ".continuity"
+    continuity.mkdir()
+    (continuity / "browser-evidence.json").write_text(json.dumps({
+        "revision": "wrong",
+        "captured_at": "2026-09-06T20:00:00Z",
+        "tool": "playwright+lighthouse",
+        "e2e_passed": True,
+        "accessibility_passed": True,
+        "pwa_passed": True,
+        "performance": {"lcp_ms": 1800, "cls": 0.03, "inp_ms": 120},
+    }), encoding="utf-8")
+    issues = browser_evidence_issues(
+        tmp_path,
+        metadata={"performance_budgets": {"lcp_ms": 2500, "cls": 0.1, "inp_ms": 200}},
+        revision="abc123",
+    )
+    assert any("revision" in issue for issue in issues)
+
+
+def test_browser_evidence_passes_when_provenance_and_budgets_match(tmp_path: Path):
+    import json
+    from nextlaw607.release_checks import browser_evidence_issues
+    continuity = tmp_path / ".continuity"
+    continuity.mkdir()
+    (continuity / "browser-evidence.json").write_text(json.dumps({
+        "revision": "abc123",
+        "captured_at": "2026-09-06T20:00:00Z",
+        "tool": "playwright+lighthouse",
+        "e2e_passed": True,
+        "accessibility_passed": True,
+        "pwa_passed": True,
+        "performance": {"lcp_ms": 1800, "cls": 0.03, "inp_ms": 120},
+    }), encoding="utf-8")
+    assert browser_evidence_issues(
+        tmp_path,
+        metadata={"performance_budgets": {"lcp_ms": 2500, "cls": 0.1, "inp_ms": 200}},
+        revision="abc123",
+    ) == []

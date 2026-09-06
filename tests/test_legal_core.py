@@ -8,7 +8,7 @@ from nextlaw607.suppression import SuppressionAnalyzer, SuppressionFacts
 
 
 def auth(**kw):
-    base=dict(citation="1 N.Y.3d 1", title="People v Example", court="NY Court of Appeals", jurisdiction="NY", decision_date=date(2024,1,1), source_url="https://nycourts.gov/example", source_tier=SourceTier.OFFICIAL, holding="A verified holding.", status=AuthorityStatus.GOOD_LAW, last_verified_on=date.today(), verification_sources=("official",), citation_history_checked_on=date.today(), negative_treatment_found=False, history_sources=("verified history review",))
+    base=dict(citation="1 N.Y.3d 1", title="People v Example", court="NY Court of Appeals", jurisdiction="NY", decision_date=date(2024,1,1), source_url="https://nycourts.gov/example", source_tier=SourceTier.OFFICIAL, holding="A verified holding.", status=AuthorityStatus.GOOD_LAW, last_verified_on=date.today(), verification_sources=("official",), citation_history_checked_on=date.today(), negative_treatment_found=False, history_sources=("https://www.courtlistener.com/opinion/123/example/",))
     base.update(kw); return LegalAuthority(**base)
 
 def test_verified_authority_passes(): assert CitationFirewall().verify(auth()).verified
@@ -62,7 +62,7 @@ def test_fresh_negative_history_review_allows_otherwise_verified_authority():
     candidate = auth(
         citation_history_checked_on=date.today(),
         negative_treatment_found=False,
-        history_sources=("CourtListener citation analysis", "official opinion source"),
+        history_sources=("https://www.courtlistener.com/opinion/123/example/", "https://www.nycourts.gov/reporter/3dseries/2024/example.htm"),
     )
     assert CitationFirewall().verify(candidate).verified
 
@@ -71,7 +71,7 @@ def test_detected_negative_treatment_always_blocks_citation():
     candidate = auth(
         citation_history_checked_on=date.today(),
         negative_treatment_found=True,
-        history_sources=("review",),
+        history_sources=("https://www.courtlistener.com/opinion/123/example/",),
     )
     decision = CitationFirewall().verify(candidate)
     assert not decision.verified
@@ -153,7 +153,41 @@ def test_next_appearance_with_source_can_be_safely_surfaced():
     case.set_next_appearance(
         datetime(2026, 10, 1, 9, 30, tzinfo=timezone.utc),
         source="court notice dated 2026-09-20",
+        source_kind="court_notice",
     )
     text = " ".join(case.next_actions()).lower()
     assert "2026-10-01" in text
     assert "court notice" in text
+
+
+def test_citation_history_requires_trusted_research_source_url():
+    candidate = auth(history_sources=("reviewed by researcher",))
+    decision = CitationFirewall().verify(candidate)
+    assert not decision.verified
+    assert any("citation history source" in reason for reason in decision.reasons)
+
+
+def test_citation_history_accepts_registered_repository_source():
+    candidate = auth(history_sources=("https://www.courtlistener.com/opinion/123/example/",))
+    assert CitationFirewall().verify(candidate).verified
+
+
+def test_next_appearance_rejects_unclassified_source():
+    import pytest
+    case = CriminalCaseState("m1", "NY", stage=ProcedureStage.PRETRIAL)
+    with pytest.raises(ValueError):
+        case.set_next_appearance(
+            datetime(2026, 10, 1, 9, 30, tzinfo=timezone.utc),
+            source="friend texted me",
+        )
+
+
+def test_next_appearance_accepts_court_or_counsel_source_kinds():
+    for source_kind in ("court_notice", "docket", "counsel_confirmation"):
+        case = CriminalCaseState("m1", "NY", stage=ProcedureStage.PRETRIAL)
+        case.set_next_appearance(
+            datetime(2026, 10, 1, 9, 30, tzinfo=timezone.utc),
+            source="verified source",
+            source_kind=source_kind,
+        )
+        assert "Verified next appearance" in " ".join(case.next_actions())

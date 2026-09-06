@@ -37,6 +37,7 @@ class CriminalCaseState:
     unresolved_issues: list[str] = field(default_factory=list)
     next_appearance: datetime | None = None
     next_appearance_source: str | None = None
+    next_appearance_source_kind: str | None = None
 
     def record(self, event: CaseEvent) -> None:
         if self.events and event.occurred_at < self.events[-1].occurred_at:
@@ -44,11 +45,15 @@ class CriminalCaseState:
         self.events.append(event)
         self.stage = event.stage
 
-    def set_next_appearance(self, when: datetime, *, source: str) -> None:
+    def set_next_appearance(self, when: datetime, *, source: str, source_kind: str | None = None) -> None:
         if not source.strip():
             raise ValueError("next appearance requires a source")
+        trusted_kinds = {"court_notice", "docket", "counsel_confirmation"}
+        if source_kind not in trusted_kinds:
+            raise ValueError("next appearance requires a trusted source kind")
         self.next_appearance = when
         self.next_appearance_source = source.strip()
+        self.next_appearance_source_kind = source_kind
 
     def next_actions(self) -> tuple[str, ...]:
         common = ("Preserve all court papers, release conditions, discovery, and attorney communications you choose to store.",)
@@ -71,7 +76,7 @@ class CriminalCaseState:
         }
         appearance: tuple[str, ...] = ()
         if self.next_appearance is not None:
-            if self.next_appearance_source:
+            if self.next_appearance_source and self.next_appearance_source_kind:
                 appearance = (
                     f"Verified next appearance: {self.next_appearance.isoformat()} — source: {self.next_appearance_source}.",
                 )
