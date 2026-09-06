@@ -42,3 +42,13 @@ def test_release_verifier_enforces_browser_evidence_gate():
     assert "browser-evidence-check.py" not in core
     assert "browser-evidence-check.py" in release
     assert (ROOT / "scripts" / "browser-evidence-check.py").is_file()
+
+
+def test_browser_evidence_workflow_captures_before_release_verification():
+    workflow = ROOT / ".github" / "workflows" / "browser-release-evidence.yml"
+    assert workflow.is_file()
+    text = workflow.read_text(encoding="utf-8")
+    assert "browser-evidence.mjs" in text
+    assert "verify-release.sh" in text
+    assert text.index("browser-evidence.mjs") < text.index("verify-release.sh")
+    assert "upload-artifact" in text

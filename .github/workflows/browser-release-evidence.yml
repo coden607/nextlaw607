@@ -1,0 +1,49 @@
+name: Browser release evidence
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - feat/legal-core-ts-pwa
+  pull_request:
+    branches:
+      - main
+jobs:
+  browser-evidence:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: python -m pip install --upgrade pip
+      - run: pip install -e . fastapi uvicorn httpx pytest
+      - run: npm --prefix apps/web install --no-audit --no-fund
+      - run: npm --prefix apps/web install --no-save --no-audit --no-fund playwright @axe-core/playwright
+      - run: npx --prefix apps/web playwright install --with-deps chromium
+      - run: npm --prefix apps/web run build
+      - name: Start local web server
+        run: |
+          node apps/web/server.mjs > /tmp/nextlaw-web.log 2>&1 &
+          echo $! > /tmp/nextlaw-web.pid
+          for i in $(seq 1 30); do
+            if curl --fail --silent http://127.0.0.1:4173/ >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/nextlaw-web.log
+          exit 1
+      - name: Capture browser evidence
+        run: node apps/web/scripts/browser-evidence.mjs
+      - name: Verify release gates
+        run: ./scripts/verify-release.sh
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: nextlaw607-browser-evidence-${{ github.sha }}
+          path: |
+            .continuity/browser-evidence.json
+            /tmp/nextlaw-web.log
+          if-no-files-found: warn
