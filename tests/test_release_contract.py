@@ -37,6 +37,8 @@ def test_every_declared_gate_has_a_command():
 
 
 def test_release_verifier_enforces_browser_evidence_gate():
-    script = (ROOT / "scripts" / "verify.sh").read_text(encoding="utf-8")
-    assert "browser-evidence-check.py" in script
+    core = (ROOT / "scripts" / "verify.sh").read_text(encoding="utf-8")
+    release = (ROOT / "scripts" / "verify-release.sh").read_text(encoding="utf-8")
+    assert "browser-evidence-check.py" not in core
+    assert "browser-evidence-check.py" in release
     assert (ROOT / "scripts" / "browser-evidence-check.py").is_file()
