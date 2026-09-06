@@ -78,6 +78,7 @@ const evidence = {
   },
 };
 await writeFile(new URL("../../../.continuity/browser-evidence.json", import.meta.url), `${JSON.stringify(evidence, null, 2)}\n`, "utf8");
+console.log(`NEXTLAW_BROWSER_EVIDENCE=${JSON.stringify(evidence)}`);
 await browser.close();
 
 if (!evidence.e2e_passed || !evidence.accessibility_passed || !evidence.pwa_passed) process.exitCode = 1;
