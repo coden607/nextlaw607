@@ -3,6 +3,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 
+
 class ProcedureStage(str, Enum):
     INVESTIGATION = "investigation"
     ARREST = "arrest"
@@ -20,6 +21,7 @@ class ProcedureStage(str, Enum):
     APPEAL = "appeal"
     POST_CONVICTION = "post_conviction"
 
+
 @dataclass(frozen=True)
 class CaseEvent:
     stage: ProcedureStage
@@ -28,6 +30,15 @@ class CaseEvent:
     source: str | None = None
     notes: str | None = None
 
+
+@dataclass(frozen=True)
+class CaseDeadline:
+    title: str
+    due_at: datetime
+    source: str
+    source_kind: str
+
+
 @dataclass
 class CriminalCaseState:
     matter_id: str
@@ -35,6 +46,7 @@ class CriminalCaseState:
     stage: ProcedureStage = ProcedureStage.INVESTIGATION
     events: list[CaseEvent] = field(default_factory=list)
     unresolved_issues: list[str] = field(default_factory=list)
+    deadlines: list[CaseDeadline] = field(default_factory=list)
     next_appearance: datetime | None = None
     next_appearance_source: str | None = None
     next_appearance_source_kind: str | None = None
@@ -55,8 +67,34 @@ class CriminalCaseState:
         self.next_appearance_source = source.strip()
         self.next_appearance_source_kind = source_kind
 
+    def add_deadline(self, title: str, due_at: datetime, *, source: str, source_kind: str) -> None:
+        if not title.strip():
+            raise ValueError("deadline requires a title")
+        if not source.strip():
+            raise ValueError("deadline requires a source")
+        trusted_kinds = {
+            "court_notice",
+            "docket",
+            "counsel_confirmation",
+            "statute",
+            "court_rule",
+        }
+        if source_kind not in trusted_kinds:
+            raise ValueError("deadline requires a trusted source kind")
+        self.deadlines.append(
+            CaseDeadline(
+                title=title.strip(),
+                due_at=due_at,
+                source=source.strip(),
+                source_kind=source_kind,
+            )
+        )
+        self.deadlines.sort(key=lambda deadline: deadline.due_at)
+
     def next_actions(self) -> tuple[str, ...]:
-        common = ("Preserve all court papers, release conditions, discovery, and attorney communications you choose to store.",)
+        common = (
+            "Preserve all court papers, release conditions, discovery, and attorney communications you choose to store.",
+        )
         stage_actions = {
             ProcedureStage.INVESTIGATION: ("Avoid discussing case facts with investigators before obtaining legal advice.",),
             ProcedureStage.ARREST: ("Ask for counsel and preserve arrest/release paperwork.",),
@@ -84,4 +122,8 @@ class CriminalCaseState:
                 appearance = (
                     "An unverified next-appearance date is stored; confirm it against court or counsel paperwork before relying on it.",
                 )
-        return stage_actions[self.stage] + appearance + common
+        deadlines = tuple(
+            f"Source-backed deadline: {deadline.title}: {deadline.due_at.isoformat()} — source: {deadline.source}."
+            for deadline in self.deadlines
+        )
+        return stage_actions[self.stage] + appearance + deadlines + common

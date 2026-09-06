@@ -2,7 +2,8 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from datetime import date
 from enum import Enum
-from .sources import SourceRegistry
+from .sources import SourceCapability, SourceRegistry
+
 
 class AuthorityStatus(str, Enum):
     GOOD_LAW = "good_law"
@@ -11,10 +12,12 @@ class AuthorityStatus(str, Enum):
     SUPERSEDED = "superseded"
     UNKNOWN = "unknown"
 
+
 class SourceTier(str, Enum):
     OFFICIAL = "official"
     REPOSITORY = "repository"
     SECONDARY = "secondary"
+
 
 @dataclass(frozen=True)
 class LegalAuthority:
@@ -33,11 +36,13 @@ class LegalAuthority:
     negative_treatment_found: bool | None = None
     history_sources: tuple[str, ...] = field(default_factory=tuple)
 
+
 @dataclass(frozen=True)
 class VerificationDecision:
     verified: bool
     label: str
     reasons: tuple[str, ...] = ()
+
 
 class CitationFirewall:
     def __init__(self, max_age_days: int = 90) -> None:
@@ -47,24 +52,41 @@ class CitationFirewall:
         today = today or date.today()
         reasons: list[str] = []
         for name in ("citation", "title", "court", "jurisdiction", "holding", "source_url"):
-            if not getattr(authority, name): reasons.append(f"missing {name}")
-        if authority.status is not AuthorityStatus.GOOD_LAW: reasons.append("authority not confirmed good law")
+            if not getattr(authority, name):
+                reasons.append(f"missing {name}")
+        if authority.status is not AuthorityStatus.GOOD_LAW:
+            reasons.append("authority not confirmed good law")
         if authority.source_tier is SourceTier.SECONDARY:
             reasons.append("secondary source cannot verify authority")
+
         registry = SourceRegistry()
-        official_text_verified = registry.is_official_url(authority.source_url, authority.jurisdiction)
+        official_text_verified = (
+            registry.is_official_url(authority.source_url, authority.jurisdiction)
+            and registry.supports(
+                authority.source_url,
+                SourceCapability.PRIMARY_TEXT,
+                authority.jurisdiction,
+            )
+        )
         if not official_text_verified:
             official_text_verified = any(
                 registry.is_official_url(source, authority.jurisdiction)
+                and registry.supports(
+                    source,
+                    SourceCapability.PRIMARY_TEXT,
+                    authority.jurisdiction,
+                )
                 for source in authority.verification_sources
             )
         if not official_text_verified:
             reasons.append("official source text not verified")
-        if not authority.verification_sources: reasons.append("no verification source")
+        if not authority.verification_sources:
+            reasons.append("no verification source")
         if authority.last_verified_on is None:
             reasons.append("never verified")
         elif (today - authority.last_verified_on).days > self.max_age_days:
             reasons.append("verification stale")
+
         if authority.citation_history_checked_on is None:
             reasons.append("citation history not reviewed")
         elif (today - authority.citation_history_checked_on).days > self.max_age_days:
@@ -75,8 +97,16 @@ class CitationFirewall:
             reasons.append("negative treatment found")
         if not authority.history_sources:
             reasons.append("no citation history source")
-        elif not any(registry.is_registered_url(source) for source in authority.history_sources):
-            reasons.append("citation history source is not a registered research source")
+        elif not all(
+            registry.supports(
+                source,
+                SourceCapability.CITATION_HISTORY,
+                authority.jurisdiction,
+            )
+            for source in authority.history_sources
+        ):
+            reasons.append("citation history source lacks citation-history capability")
+
         if reasons:
             return VerificationDecision(False, "UNVERIFIED — DO NOT CITE", tuple(reasons))
         return VerificationDecision(True, "VERIFIED", ())
