@@ -84,11 +84,19 @@ class CitationFirewall:
             reasons.append("no verification source")
         if authority.last_verified_on is None:
             reasons.append("never verified")
+        elif authority.last_verified_on > today:
+            reasons.append("verification date is in the future")
+        elif authority.last_verified_on < authority.decision_date:
+            reasons.append("verification predates decision")
         elif (today - authority.last_verified_on).days > self.max_age_days:
             reasons.append("verification stale")
 
         if authority.citation_history_checked_on is None:
             reasons.append("citation history not reviewed")
+        elif authority.citation_history_checked_on > today:
+            reasons.append("citation history review date is in the future")
+        elif authority.citation_history_checked_on < authority.decision_date:
+            reasons.append("citation history review predates decision")
         elif (today - authority.citation_history_checked_on).days > self.max_age_days:
             reasons.append("citation history review stale")
         if authority.negative_treatment_found is None:
