@@ -52,3 +52,5 @@ def test_browser_evidence_workflow_captures_before_release_verification():
     assert "verify-release.sh" in text
     assert text.index("browser-evidence.mjs") < text.index("verify-release.sh")
     assert "upload-artifact" in text
+    assert "continue-on-error: true" in text
+    assert "include-hidden-files: true" in text

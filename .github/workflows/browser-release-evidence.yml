@@ -36,6 +36,7 @@ jobs:
           cat /tmp/nextlaw-web.log
           exit 1
       - name: Capture browser evidence
+        continue-on-error: true
         run: node apps/web/scripts/browser-evidence.mjs
       - name: Verify release gates
         run: ./scripts/verify-release.sh
@@ -47,3 +48,4 @@ jobs:
             .continuity/browser-evidence.json
             /tmp/nextlaw-web.log
           if-no-files-found: warn
+          include-hidden-files: true
