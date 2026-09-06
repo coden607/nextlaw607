@@ -52,6 +52,21 @@ def test_citation_firewall_rejects_verification_before_decision():
     assert "citation history review predates decision" in decision.reasons
 
 
+def test_citation_firewall_rejects_duplicate_citation_history_sources():
+    today = date(2026, 9, 6)
+    candidate = _authority(
+        last_verified_on=today,
+        citation_history_checked_on=today,
+        history_sources=(
+            "https://www.courtlistener.com/opinion/123/example/",
+            "https://courtlistener.com/opinion/123/example/?type=o",
+        ),
+    )
+    decision = CitationFirewall().verify(candidate, today=today)
+    assert not decision.verified
+    assert "citation history sources are not independent" in decision.reasons
+
+
 def test_deadline_actions_label_overdue_without_inventing_deadlines():
     case = CriminalCaseState("m1", "NY", stage=ProcedureStage.MOTIONS)
     case.add_deadline(
