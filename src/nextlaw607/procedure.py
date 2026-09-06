@@ -51,7 +51,9 @@ class CriminalCaseState:
     next_appearance_source: str | None = None
     next_appearance_source_kind: str | None = None
 
-    def record(self, event: CaseEvent) -> None:
+    def record(self, event: CaseEvent, *, as_of: datetime | None = None) -> None:
+        if as_of is not None and event.occurred_at > as_of:
+            raise ValueError("event timestamp is in the future")
         if self.events and event.occurred_at < self.events[-1].occurred_at:
             raise ValueError("events must be recorded in chronological order")
         self.events.append(event)
@@ -115,9 +117,14 @@ class CriminalCaseState:
         appearance: tuple[str, ...] = ()
         if self.next_appearance is not None:
             if self.next_appearance_source and self.next_appearance_source_kind:
-                appearance = (
-                    f"Verified next appearance: {self.next_appearance.isoformat()} — source: {self.next_appearance_source}.",
-                )
+                if as_of is not None and self.next_appearance < as_of:
+                    appearance = (
+                        f"Past-dated verified appearance: {self.next_appearance.isoformat()} — source: {self.next_appearance_source}. Re-check current court or counsel source before relying on this date.",
+                    )
+                else:
+                    appearance = (
+                        f"Verified next appearance: {self.next_appearance.isoformat()} — source: {self.next_appearance_source}.",
+                    )
             else:
                 appearance = (
                     "An unverified next-appearance date is stored; confirm it against court or counsel paperwork before relying on it.",
