@@ -128,7 +128,8 @@ class SourceRegistry:
         if not host or not source_host:
             return False
         root = source_host[4:] if source_host.startswith("www.") else source_host
-        if not (host == source_host or host == root or host.endswith("." + root)):
+        candidate_root = host[4:] if host.startswith("www.") else host
+        if candidate_root != root:
             return False
 
         source_path = source_parsed.path.rstrip("/")
