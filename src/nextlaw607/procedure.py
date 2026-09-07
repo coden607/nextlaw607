@@ -87,23 +87,25 @@ class CriminalCaseState:
             raise ValueError("event source requires a trusted source kind")
         if event.source_kind is not None and not has_source:
             raise ValueError("event source kind requires a source")
+        normalized_source_url = event.source_url.strip() if event.source_url and event.source_url.strip() else None
+        if normalized_source_url is not None and event.source_kind in {"court_notice", "docket"}:
+            registry = SourceRegistry()
+            if not (
+                registry.is_official_url(normalized_source_url, self.jurisdiction)
+                and registry.supports(
+                    normalized_source_url,
+                    SourceCapability.PROCEDURE,
+                    self.jurisdiction,
+                )
+            ):
+                raise ValueError("court event requires official procedure source URL")
         if event.verified_at is not None:
             if not has_source or event.source_kind is None:
                 raise ValueError("event verification requires classified provenance")
             if as_of is not None and event.verified_at > as_of:
                 raise ValueError("event source verification is in the future")
-            if event.source_kind in {"court_notice", "docket"}:
-                normalized_source_url = event.source_url.strip() if event.source_url and event.source_url.strip() else None
-                registry = SourceRegistry()
-                if not normalized_source_url or not (
-                    registry.is_official_url(normalized_source_url, self.jurisdiction)
-                    and registry.supports(
-                        normalized_source_url,
-                        SourceCapability.PROCEDURE,
-                        self.jurisdiction,
-                    )
-                ):
-                    raise ValueError("verified court event requires official procedure source URL")
+            if event.source_kind in {"court_notice", "docket"} and normalized_source_url is None:
+                raise ValueError("verified court event requires official procedure source URL")
         if self.events and event.occurred_at < self.events[-1].occurred_at:
             raise ValueError("events must be recorded in chronological order")
         self.events.append(event)
