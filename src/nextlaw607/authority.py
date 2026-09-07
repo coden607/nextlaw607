@@ -106,6 +106,11 @@ class CitationFirewall:
             reasons.append("citation history review date is in the future")
         elif authority.citation_history_checked_on < authority.decision_date:
             reasons.append("citation history review predates decision")
+        elif (
+            authority.last_verified_on is not None
+            and authority.citation_history_checked_on < authority.last_verified_on
+        ):
+            reasons.append("citation history review predates latest text verification")
         elif (today - authority.citation_history_checked_on).days > self.max_age_days:
             reasons.append("citation history review stale")
         if authority.negative_treatment_found is None:
