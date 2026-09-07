@@ -261,3 +261,15 @@ def test_verification_sources_must_be_registered_primary_text_urls():
     decision = CitationFirewall().verify(candidate)
     assert not decision.verified
     assert any("verification source" in reason for reason in decision.reasons)
+
+
+def test_unregistered_repository_source_url_fails_even_with_official_cross_check():
+    candidate = auth(
+        source_url="https://example.com/copied-opinion",
+        source_tier=SourceTier.REPOSITORY,
+        verification_sources=("https://www.nycourts.gov/reporter/3dseries/2024/example.htm",),
+        history_sources=("https://www.courtlistener.com/opinion/123/example/",),
+    )
+    decision = CitationFirewall().verify(candidate)
+    assert not decision.verified
+    assert any("authority source URL" in reason for reason in decision.reasons)
