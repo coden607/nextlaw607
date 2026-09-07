@@ -19,3 +19,13 @@ def test_registered_source_with_path_scope_accepts_path_and_descendants():
     assert registry.is_registered_url(root) is True
     assert registry.is_registered_url(descendant) is True
     assert registry.supports(descendant, SourceCapability.PRIMARY_TEXT, "NY") is True
+
+
+def test_registered_source_rejects_unregistered_subdomain_of_trusted_domain():
+    registry = SourceRegistry()
+    unregistered_subdomain = "https://attacker.nycourts.gov/opinion/example"
+
+    assert registry.is_registered_url(unregistered_subdomain) is False
+    assert registry.is_official_url(unregistered_subdomain, "NY") is False
+    assert registry.provider_identity(unregistered_subdomain, "NY") is None
+    assert registry.supports(unregistered_subdomain, SourceCapability.PRIMARY_TEXT, "NY") is False
