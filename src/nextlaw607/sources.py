@@ -132,6 +132,17 @@ class SourceRegistry:
             return True
         return source.jurisdiction in {jurisdiction, "ALL"}
 
+    def provider_identity(self, url: str, jurisdiction: str | None = None) -> str | None:
+        matches = [
+            source
+            for source in self.sources
+            if self._applies_to(source, jurisdiction)
+            and self._host_matches(url, source.base_url)
+        ]
+        if not matches:
+            return None
+        return max(matches, key=lambda source: source.rank).name
+
     def is_official_url(self, url: str, jurisdiction: str | None = None) -> bool:
         return any(
             source.official
