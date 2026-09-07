@@ -131,6 +131,8 @@ class SourceRegistry:
         source_parsed = urlparse(base_url)
         if parsed.scheme.lower() != "https" or source_parsed.scheme.lower() != "https":
             return False
+        if parsed.username is not None or parsed.password is not None:
+            return False
         host = (parsed.hostname or "").lower()
         source_host = (source_parsed.hostname or "").lower()
         if not host or not source_host:
