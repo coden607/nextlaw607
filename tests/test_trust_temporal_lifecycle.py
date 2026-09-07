@@ -93,6 +93,23 @@ def test_citation_firewall_rejects_same_registered_provider_across_subdomains():
     assert "citation history sources are not independent" in decision.reasons
 
 
+def test_citation_history_must_be_independent_of_primary_text_verification_provider():
+    today = date(2026, 9, 7)
+    candidate = _authority(
+        last_verified_on=today,
+        citation_history_checked_on=today,
+        verification_sources=(
+            "https://www.nycourts.gov/reporter/3dseries/2024/example.htm",
+        ),
+        history_sources=(
+            "https://www.nycourts.gov/reporter/3dseries/2024/example.htm",
+        ),
+    )
+    decision = CitationFirewall().verify(candidate, today=today)
+    assert not decision.verified
+    assert "citation history not independent of text verification" in decision.reasons
+
+
 def test_deadline_actions_label_overdue_without_inventing_deadlines():
     case = CriminalCaseState("m1", "NY", stage=ProcedureStage.MOTIONS)
     case.add_deadline(
