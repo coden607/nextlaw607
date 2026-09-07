@@ -6,9 +6,15 @@ cd "$ROOT"
 ./scripts/verify-web.sh
 python3 - <<'PY'
 import json
-for path in ['package.json','apps/web/package.json','apps/web/manifest.webmanifest','.continuity/verification.json']:
+from pathlib import Path
+from nextlaw607.stack_contract import validate_stack_manifest
+
+for path in ['package.json','apps/web/package.json','apps/web/manifest.webmanifest','.continuity/verification.json','config/production-stack.json']:
     with open(path, encoding='utf-8') as handle:
         json.load(handle)
-print('JSON manifests valid')
+
+manifest = json.loads(Path('config/production-stack.json').read_text(encoding='utf-8'))
+contract = validate_stack_manifest(manifest)
+print(f'JSON manifests valid; production stack contract covers {len(contract.components)} components')
 PY
 printf '\nNextLaw607 verification PASS\n'
