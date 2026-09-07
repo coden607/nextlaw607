@@ -3,6 +3,8 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 
+from .sources import SourceCapability, SourceRegistry
+
 
 class ProcedureStage(str, Enum):
     INVESTIGATION = "investigation"
@@ -50,6 +52,7 @@ class CaseDeadline:
     source: str
     source_kind: str
     kind: DeadlineKind = DeadlineKind.GENERAL
+    source_url: str | None = None
 
 
 @dataclass
@@ -102,6 +105,7 @@ class CriminalCaseState:
         source: str,
         source_kind: str,
         kind: DeadlineKind = DeadlineKind.GENERAL,
+        source_url: str | None = None,
     ) -> None:
         if not title.strip():
             raise ValueError("deadline requires a title")
@@ -118,6 +122,18 @@ class CriminalCaseState:
             raise ValueError("deadline requires a trusted source kind")
         if not isinstance(kind, DeadlineKind):
             raise ValueError("deadline kind must be classified")
+        normalized_source_url = source_url.strip() if source_url and source_url.strip() else None
+        if source_kind in {"statute", "court_rule"}:
+            registry = SourceRegistry()
+            if not normalized_source_url or not (
+                registry.is_official_url(normalized_source_url, self.jurisdiction)
+                and registry.supports(
+                    normalized_source_url,
+                    SourceCapability.PRIMARY_TEXT,
+                    self.jurisdiction,
+                )
+            ):
+                raise ValueError("statutory/rule deadline requires official primary-text source URL")
         self.deadlines.append(
             CaseDeadline(
                 title=title.strip(),
@@ -125,6 +141,7 @@ class CriminalCaseState:
                 source=source.strip(),
                 source_kind=source_kind,
                 kind=kind,
+                source_url=normalized_source_url,
             )
         )
         self.deadlines.sort(key=lambda deadline: deadline.due_at)
