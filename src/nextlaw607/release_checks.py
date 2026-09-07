@@ -98,6 +98,28 @@ def browser_evidence_issues(root: Path, *, metadata: dict, revision: str) -> Lis
         if evidence.get(gate) is not True:
             issues.append(f"browser evidence gate failed or missing: {gate}")
 
+    details = evidence.get("details")
+    if not isinstance(details, dict):
+        issues.append("browser evidence details missing")
+    else:
+        accessibility_violations = details.get("accessibility_violations")
+        console_errors = details.get("console_errors")
+        request_failures = details.get("request_failures")
+        if not isinstance(accessibility_violations, list):
+            issues.append("browser evidence accessibility violation details missing")
+        elif accessibility_violations:
+            issues.append("browser evidence contains accessibility violations")
+        if not isinstance(console_errors, list):
+            issues.append("browser evidence console error details missing")
+        elif console_errors:
+            issues.append("browser evidence contains console errors")
+        if not isinstance(request_failures, list):
+            issues.append("browser evidence request failure details missing")
+        elif request_failures:
+            issues.append("browser evidence contains request failures")
+        if details.get("offline_reload_passed") is not True:
+            issues.append("browser evidence offline reload failed or missing")
+
     performance = evidence.get("performance") or {}
     for metric, limit in (metadata.get("performance_budgets") or {}).items():
         value = performance.get(metric)
