@@ -59,3 +59,43 @@ def test_client_cannot_self_assert_premium_entitlement():
     assert body['identity']['kind'] == 'guest'
     assert body['entitlement']['tier'] == 'free'
     assert body['premium_access'] is False
+
+
+def test_verified_provider_controls_authenticated_premium_access():
+    from nextlaw607.access import Entitlement, VerifiedIdentity
+
+    class VerifiedProvider:
+        def verify_bearer_token(self, token: str):
+            assert token == 'verified-token'
+            return VerifiedIdentity(subject='user-123', provider='test-provider')
+
+    class PremiumProvider:
+        def entitlement_for(self, identity: VerifiedIdentity):
+            assert identity.subject == 'user-123'
+            return Entitlement(
+                tier='premium',
+                source='purchase',
+                expires_at=None,
+                revocable=True,
+                billing_required=True,
+            )
+
+    old_identity = app.state.identity_provider
+    old_entitlement = app.state.entitlement_provider
+    app.state.identity_provider = VerifiedProvider()
+    app.state.entitlement_provider = PremiumProvider()
+    try:
+        response = client.get('/api/session', headers={'Authorization': 'Bearer verified-token'})
+    finally:
+        app.state.identity_provider = old_identity
+        app.state.entitlement_provider = old_entitlement
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body['identity'] == {
+        'kind': 'authenticated',
+        'subject': 'user-123',
+        'provider': 'test-provider',
+    }
+    assert body['entitlement']['tier'] == 'premium'
+    assert body['premium_access'] is True
