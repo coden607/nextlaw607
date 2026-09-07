@@ -128,7 +128,14 @@ class SourceRegistry:
         if not host or not source_host:
             return False
         root = source_host[4:] if source_host.startswith("www.") else source_host
-        return host == source_host or host == root or host.endswith("." + root)
+        if not (host == source_host or host == root or host.endswith("." + root)):
+            return False
+
+        source_path = source_parsed.path.rstrip("/")
+        if not source_path:
+            return True
+        candidate_path = parsed.path.rstrip("/")
+        return candidate_path == source_path or candidate_path.startswith(source_path + "/")
 
     @staticmethod
     def _applies_to(source: LegalSource, jurisdiction: str | None) -> bool:
