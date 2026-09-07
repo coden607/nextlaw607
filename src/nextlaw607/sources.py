@@ -108,6 +108,14 @@ class SourceRegistry:
                 80,
                 frozenset({history}),
             ),
+            LegalSource(
+                "CourtListener",
+                "ALL",
+                False,
+                "https://api.courtlistener.com",
+                80,
+                frozenset({history}),
+            ),
         )
 
     def ordered_for(self, jurisdiction: str) -> list[LegalSource]:
