@@ -128,13 +128,25 @@ class CitationFirewall:
             for source in authority.history_sources
         ):
             reasons.append("citation history source lacks citation-history capability")
-        elif len(authority.history_sources) > 1:
-            provider_identities = tuple(
+        else:
+            history_provider_identities = tuple(
                 registry.provider_identity(source, authority.jurisdiction)
                 for source in authority.history_sources
             )
-            if len(set(provider_identities)) != len(provider_identities):
+            if len(authority.history_sources) > 1 and len(set(history_provider_identities)) != len(history_provider_identities):
                 reasons.append("citation history sources are not independent")
+
+            verification_provider_identities = {
+                registry.provider_identity(source, authority.jurisdiction)
+                for source in authority.verification_sources
+            }
+            independent_history_providers = {
+                provider
+                for provider in history_provider_identities
+                if provider is not None and provider not in verification_provider_identities
+            }
+            if not independent_history_providers:
+                reasons.append("citation history not independent of text verification")
 
         if reasons:
             return VerificationDecision(False, "UNVERIFIED — DO NOT CITE", tuple(reasons))
