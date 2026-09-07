@@ -53,6 +53,7 @@ class CaseDeadline:
     source_kind: str
     kind: DeadlineKind = DeadlineKind.GENERAL
     source_url: str | None = None
+    verified_at: datetime | None = None
 
 
 @dataclass
@@ -106,6 +107,8 @@ class CriminalCaseState:
         source_kind: str,
         kind: DeadlineKind = DeadlineKind.GENERAL,
         source_url: str | None = None,
+        verified_at: datetime | None = None,
+        as_of: datetime | None = None,
     ) -> None:
         if not title.strip():
             raise ValueError("deadline requires a title")
@@ -122,6 +125,11 @@ class CriminalCaseState:
             raise ValueError("deadline requires a trusted source kind")
         if not isinstance(kind, DeadlineKind):
             raise ValueError("deadline kind must be classified")
+        if verified_at is not None:
+            if as_of is not None and verified_at > as_of:
+                raise ValueError("deadline source verification is in the future")
+            if due_at < verified_at:
+                raise ValueError("deadline predates source verification")
         normalized_source_url = source_url.strip() if source_url and source_url.strip() else None
         if source_kind in {"statute", "court_rule"}:
             registry = SourceRegistry()
@@ -142,6 +150,7 @@ class CriminalCaseState:
                 source_kind=source_kind,
                 kind=kind,
                 source_url=normalized_source_url,
+                verified_at=verified_at,
             )
         )
         self.deadlines.sort(key=lambda deadline: deadline.due_at)
