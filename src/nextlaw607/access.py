@@ -96,6 +96,10 @@ class IdentityVerificationError(ValueError):
     pass
 
 
+class PremiumAccessRequired(PermissionError):
+    pass
+
+
 @dataclass(frozen=True, slots=True)
 class AccessContext:
     identity_kind: Literal["guest", "authenticated"]
@@ -147,3 +151,12 @@ def resolve_access(
         provider=verified.provider,
         entitlement=entitlement,
     )
+
+
+def ensure_premium(
+    access: AccessContext,
+    now: datetime | None = None,
+) -> AccessContext:
+    if not access.entitlement.has_premium_access(now=now):
+        raise PremiumAccessRequired("premium access required")
+    return access
