@@ -8,7 +8,7 @@ const revision = process.env.GITHUB_SHA || process.env.NEXTLAW_REVISION;
 if (!revision) throw new Error("browser evidence requires an exact revision");
 
 const browser = await chromium.launch({ headless: true });
-const context = await browser.newContext();
+const context = await browser.newContext({ acceptDownloads: true });
 const page = await context.newPage();
 await page.addInitScript(() => {
   window.__nextlawVitals = { lcp_ms: 0, cls: 0, inp_ms: 0 };
@@ -36,6 +36,22 @@ await page.goto(baseURL, { waitUntil: "networkidle" });
 await page.locator("button[data-mode]").first().click();
 await page.locator("#back").click();
 await page.waitForTimeout(250);
+
+await page.locator("#create-case").click();
+await page.locator(".case-editor").waitFor({ state: "visible" });
+await page.locator("#back").click();
+await page.locator("button[data-matter]").first().waitFor({ state: "visible" });
+
+const downloadPromise = page.waitForEvent("download");
+await page.locator("#export-data").click();
+const download = await downloadPromise;
+if (!download.suggestedFilename().endsWith(".json")) throw new Error("local data export did not produce JSON download");
+
+page.once("dialog", dialog => dialog.accept());
+await page.locator("#delete-data").click();
+await page.getByText("No local case created yet.").waitFor({ state: "visible" });
+const casesCleared = await page.evaluate(() => localStorage.getItem("nextlaw607.cases.v1") === null);
+if (!casesCleared) throw new Error("delete local data did not clear case storage");
 
 const axe = await new AxeBuilder({ page }).analyze();
 const seriousA11y = axe.violations.filter(v => ["serious", "critical"].includes(v.impact));
@@ -75,6 +91,8 @@ const evidence = {
     console_errors: consoleErrors,
     request_failures: requestFailures,
     offline_reload_passed: offlinePassed,
+    local_data_export_passed: true,
+    local_data_delete_passed: casesCleared,
   },
 };
 await writeFile(new URL("../../../.continuity/browser-evidence.json", import.meta.url), `${JSON.stringify(evidence, null, 2)}\n`, "utf8");
