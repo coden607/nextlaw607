@@ -1,5 +1,7 @@
 from datetime import datetime, timezone
 
+import pytest
+
 from nextlaw607.procedure import CriminalCaseState, DeadlineKind, ProcedureStage
 
 
@@ -31,3 +33,32 @@ def test_untyped_deadline_remains_general_for_backward_compatible_fail_closed_st
 
     assert case.deadlines[0].kind is DeadlineKind.GENERAL
     assert "general deadline" in " ".join(case.next_actions()).lower()
+
+
+def test_statutory_deadline_rejects_free_form_source_without_official_primary_text():
+    case = CriminalCaseState("m1", "NY", stage=ProcedureStage.MOTIONS)
+
+    with pytest.raises(ValueError, match="statutory/rule deadline requires official primary-text source URL"):
+        case.add_deadline(
+            "statutory motion deadline",
+            datetime(2026, 10, 20, tzinfo=timezone.utc),
+            source="CPL 255.20",
+            source_kind="statute",
+            kind=DeadlineKind.MOTION,
+        )
+
+
+def test_statutory_deadline_accepts_registered_official_primary_text_source():
+    case = CriminalCaseState("m1", "NY", stage=ProcedureStage.MOTIONS)
+    source_url = "https://legislation.nysenate.gov/laws/CPL/255.20"
+
+    case.add_deadline(
+        "statutory motion deadline",
+        datetime(2026, 10, 20, tzinfo=timezone.utc),
+        source="CPL 255.20",
+        source_kind="statute",
+        source_url=source_url,
+        kind=DeadlineKind.MOTION,
+    )
+
+    assert case.deadlines[0].source_url == source_url
