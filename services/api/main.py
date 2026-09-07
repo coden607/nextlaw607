@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 from datetime import datetime
 
 from fastapi import FastAPI, Header, HTTPException, Request
@@ -8,15 +9,15 @@ from pydantic import BaseModel, Field
 from nextlaw607.access import (
     FreeEntitlementProvider,
     IdentityVerificationError,
-    RejectingIdentityProvider,
     resolve_access,
 )
+from nextlaw607.access_config import identity_provider_from_environment
 from nextlaw607.encounter import EncounterMode
 from nextlaw607.live import LiveEncounterEngine
 from nextlaw607.procedure import CriminalCaseState, ProcedureStage
 
 app = FastAPI(title="NextLaw607 API", version="0.2.0")
-app.state.identity_provider = RejectingIdentityProvider()
+app.state.identity_provider = identity_provider_from_environment(os.environ)
 app.state.entitlement_provider = FreeEntitlementProvider()
 live_engine = LiveEncounterEngine()
 
