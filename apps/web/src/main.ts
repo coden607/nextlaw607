@@ -1,5 +1,5 @@
 import { PROCEDURE_STAGES, RIGHTS_PACK, type CaseGuardianMatter, type EncounterMode, type ProcedureStage } from "./domain.js";
-import { readCases, readPrivacy, writePrivacy } from "./storage.js";
+import { clearLocalData, exportLocalData, readCases, readPrivacy, writePrivacy } from "./storage.js";
 import { addMatterIssue, createMatter, matterSummary, setMatterStage, setNextAppearance, updateMatter } from "./caseguardian.js";
 import { escapeHtml } from "./html.js";
 import { requestCaseNextActions } from "./api.js";
@@ -9,6 +9,26 @@ if (!appNode) throw new Error("#app missing");
 const app: HTMLElement = appNode;
 
 const stageLabel = (stage: ProcedureStage): string => stage.replaceAll("_", " ").replace(/\b\w/g, char => char.toUpperCase());
+
+function downloadLocalData(): void {
+  const snapshot = exportLocalData();
+  const blob = new Blob([`${JSON.stringify(snapshot, null, 2)}\n`], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = `nextlaw607-local-data-${new Date().toISOString().slice(0, 10)}.json`;
+  document.body.append(anchor);
+  anchor.click();
+  anchor.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 0);
+}
+
+function deleteLocalData(): void {
+  const confirmed = window.confirm("Delete all NextLaw607 case and privacy data stored on this device? This cannot be undone.");
+  if (!confirmed) return;
+  clearLocalData();
+  renderHome();
+}
 
 function renderHome(): void {
   const privacy = readPrivacy();
@@ -32,9 +52,15 @@ function renderHome(): void {
         <button id="create-case" class="card"><strong>Create local case</strong><span>Stored on this device by default</span></button>
       </section>
       <section class="privacy" aria-labelledby="privacy-heading">
-        <h2 id="privacy-heading">Privacy</h2>
+        <h2 id="privacy-heading">Privacy Center</h2>
+        <p><strong>Local/guest mode.</strong> Your Case Guardian data stays on this device unless you explicitly export or enable a future sync feature.</p>
         <label><input id="diagnostics" type="checkbox" ${privacy.diagnostics ? "checked" : ""}> Share privacy-safe diagnostics</label>
         <p>Legal questions, case documents, conversations, evidence and precise location are excluded from ordinary diagnostics.</p>
+        <div class="row wrap privacy-actions">
+          <button id="export-data" type="button">Export my local data</button>
+          <button id="delete-data" type="button">Delete local data</button>
+        </div>
+        <p class="source-note">Export creates a JSON backup you control. Delete removes NextLaw607 case and privacy records stored in this browser on this device.</p>
       </section>
     </main>`;
 
@@ -52,6 +78,8 @@ function renderHome(): void {
     const checked = (event.currentTarget as HTMLInputElement).checked;
     writePrivacy({ ...readPrivacy(), diagnostics: checked });
   });
+  app.querySelector<HTMLButtonElement>("#export-data")?.addEventListener("click", downloadLocalData);
+  app.querySelector<HTMLButtonElement>("#delete-data")?.addEventListener("click", deleteLocalData);
 }
 
 function renderRights(mode: EncounterMode): void {
