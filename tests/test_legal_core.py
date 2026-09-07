@@ -119,7 +119,10 @@ def test_identification_procedure_flags_wade_showup_review_without_outcome_claim
 
 
 def test_claimed_official_source_must_match_registered_official_domain():
-    candidate = auth(source_url="https://example.com/not-official")
+    candidate = auth(
+        source_url="https://example.com/not-official",
+        verification_sources=(),
+    )
     decision = CitationFirewall().verify(candidate)
     assert not decision.verified
     assert any("official source" in reason for reason in decision.reasons)
