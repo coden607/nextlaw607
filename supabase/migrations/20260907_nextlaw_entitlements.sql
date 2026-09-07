@@ -47,5 +47,7 @@ revoke all on table public.entitlements from anon;
 revoke all on table public.entitlements from authenticated;
 
 -- Backend entitlement resolution only. service_role bypasses RLS and must remain
--- server-side; it is never shipped to browser/PWA code.
-grant select, insert, update, delete on table public.entitlements to service_role;
+-- server-side; it is never shipped to browser/PWA code. Read and write grants are
+-- kept separate so the authorization surface is obvious during review.
+grant select on table public.entitlements to service_role;
+grant insert, update, delete on table public.entitlements to service_role;
