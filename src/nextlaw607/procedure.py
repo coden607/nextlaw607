@@ -243,13 +243,23 @@ class CriminalCaseState:
         appearance: tuple[str, ...] = ()
         if self.next_appearance is not None:
             if self.next_appearance_source and self.next_appearance_source_kind:
+                is_verified = self.next_appearance_verified_at is not None
                 if as_of is not None and self.next_appearance < as_of:
+                    if is_verified:
+                        appearance = (
+                            f"Past-dated verified appearance: {self.next_appearance.isoformat()} — source: {self.next_appearance_source}. Re-check current court or counsel source before relying on this date.",
+                        )
+                    else:
+                        appearance = (
+                            f"Past-dated source-backed appearance: {self.next_appearance.isoformat()} — source: {self.next_appearance_source}. Re-check current court or counsel source before relying on this date.",
+                        )
+                elif is_verified:
                     appearance = (
-                        f"Past-dated verified appearance: {self.next_appearance.isoformat()} — source: {self.next_appearance_source}. Re-check current court or counsel source before relying on this date.",
+                        f"Verified next appearance: {self.next_appearance.isoformat()} — source: {self.next_appearance_source}.",
                     )
                 else:
                     appearance = (
-                        f"Verified next appearance: {self.next_appearance.isoformat()} — source: {self.next_appearance_source}.",
+                        f"Source-backed next appearance: {self.next_appearance.isoformat()} — source: {self.next_appearance_source}. Verify before relying on this date.",
                     )
             else:
                 appearance = (
