@@ -9,6 +9,7 @@ from nextlaw607.access import (
     RejectingIdentityProvider,
 )
 from nextlaw607.entitlement_store import RepositoryEntitlementProvider
+from nextlaw607.supabase_entitlements import SupabaseEntitlementRepository
 from nextlaw607.supabase_identity import SupabaseIdentityProvider
 
 
@@ -51,8 +52,11 @@ def entitlement_provider_from_environment(environment: Mapping[str, str]) -> Ent
             "SUPABASE_SECRET_KEY must be a server-side secret key, not a publishable key"
         )
 
-    # The repository boundary is enabled only with complete server-side
-    # credentials. Until the authoritative Supabase entitlement lookup is
-    # installed, the lookup deliberately returns no grant so access fails
-    # closed to Free rather than trusting client metadata or headers.
-    return RepositoryEntitlementProvider(lambda subject: None)
+    try:
+        repository = SupabaseEntitlementRepository(
+            project_url=project_url,
+            secret_key=secret_key,
+        )
+    except ValueError as exc:
+        raise AccessConfigurationError(str(exc)) from exc
+    return RepositoryEntitlementProvider(repository.lookup)
