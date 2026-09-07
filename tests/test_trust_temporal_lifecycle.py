@@ -138,7 +138,7 @@ def test_deadline_actions_keep_future_source_backed_deadline_upcoming():
     assert "docket entry" in text
 
 
-def test_past_dated_verified_appearance_requires_current_recheck():
+def test_past_dated_source_backed_appearance_requires_current_recheck():
     case = CriminalCaseState("m1", "NY", stage=ProcedureStage.PRETRIAL)
     case.set_next_appearance(
         datetime(2026, 9, 5, 9, 0, tzinfo=timezone.utc),
@@ -147,7 +147,8 @@ def test_past_dated_verified_appearance_requires_current_recheck():
     )
     actions = case.next_actions(as_of=datetime(2026, 9, 6, 12, 0, tzinfo=timezone.utc))
     text = " ".join(actions).lower()
-    assert "past-dated verified appearance" in text
+    assert "past-dated source-backed appearance" in text
+    assert "past-dated verified appearance" not in text
     assert "re-check current court or counsel source" in text
     assert "court notice dated 2026-09-01" in text
 
