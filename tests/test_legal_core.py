@@ -185,15 +185,17 @@ def test_next_appearance_rejects_unclassified_source():
         )
 
 
-def test_next_appearance_accepts_court_or_counsel_source_kinds():
+def test_next_appearance_accepts_court_or_counsel_source_kinds_without_overstating_verification():
     for source_kind in ("court_notice", "docket", "counsel_confirmation"):
         case = CriminalCaseState("m1", "NY", stage=ProcedureStage.PRETRIAL)
         case.set_next_appearance(
             datetime(2026, 10, 1, 9, 30, tzinfo=timezone.utc),
-            source="verified source",
+            source="classified source",
             source_kind=source_kind,
         )
-        assert "Verified next appearance" in " ".join(case.next_actions())
+        text = " ".join(case.next_actions())
+        assert "Source-backed next appearance" in text
+        assert "Verified next appearance" not in text
 
 
 def test_source_registry_distinguishes_citation_history_from_statute_text():
