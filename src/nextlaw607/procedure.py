@@ -182,6 +182,19 @@ class CriminalCaseState:
             if due_at < verified_at:
                 raise ValueError("deadline predates source verification")
         normalized_source_url = source_url.strip() if source_url and source_url.strip() else None
+        if normalized_source_url is not None and source_kind in {"court_notice", "docket"}:
+            registry = SourceRegistry()
+            if not (
+                registry.is_official_url(normalized_source_url, self.jurisdiction)
+                and registry.supports(
+                    normalized_source_url,
+                    SourceCapability.PROCEDURE,
+                    self.jurisdiction,
+                )
+            ):
+                raise ValueError("court deadline requires official procedure source URL")
+        if verified_at is not None and source_kind in {"court_notice", "docket"} and normalized_source_url is None:
+            raise ValueError("verified court deadline requires official procedure source URL")
         if source_kind in {"statute", "court_rule"}:
             registry = SourceRegistry()
             if not normalized_source_url or not (
