@@ -52,6 +52,17 @@ def test_citation_firewall_rejects_verification_before_decision():
     assert "citation history review predates decision" in decision.reasons
 
 
+def test_citation_firewall_rejects_history_review_older_than_latest_text_verification():
+    today = date(2026, 9, 7)
+    candidate = _authority(
+        last_verified_on=date(2026, 9, 7),
+        citation_history_checked_on=date(2026, 9, 6),
+    )
+    decision = CitationFirewall().verify(candidate, today=today)
+    assert not decision.verified
+    assert "citation history review predates latest text verification" in decision.reasons
+
+
 def test_citation_firewall_rejects_duplicate_citation_history_sources():
     today = date(2026, 9, 6)
     candidate = _authority(
