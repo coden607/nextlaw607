@@ -88,6 +88,15 @@ class CitationFirewall:
             reasons.append("official source text not verified")
         if not authority.verification_sources:
             reasons.append("no verification source")
+        elif not all(
+            registry.supports(
+                source,
+                SourceCapability.PRIMARY_TEXT,
+                authority.jurisdiction,
+            )
+            for source in authority.verification_sources
+        ):
+            reasons.append("verification source lacks primary-text capability")
         if authority.last_verified_on is None:
             reasons.append("never verified")
         elif authority.last_verified_on > today:
