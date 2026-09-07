@@ -26,3 +26,25 @@ export function matterSummary(matter: CaseGuardianMatter): string {
   const appearance = matter.nextAppearance ? `Next appearance: ${matter.nextAppearance}` : "Next appearance: not entered";
   return `${appearance} · ${matter.issues.length} issue(s) · ${matter.nextActions.length} next action(s)`;
 }
+
+export function setMatterStage(matter: CaseGuardianMatter, stage: CaseGuardianMatter["stage"], storage: Storage = localStorage): CaseGuardianMatter {
+  const updated = { ...matter, stage };
+  updateMatter(updated, storage);
+  return updated;
+}
+
+export function setNextAppearance(matter: CaseGuardianMatter, nextAppearance: string | undefined, storage: Storage = localStorage): CaseGuardianMatter {
+  const normalized = nextAppearance?.trim() || undefined;
+  const updated = { ...matter, nextAppearance: normalized };
+  updateMatter(updated, storage);
+  return updated;
+}
+
+export function addMatterIssue(matter: CaseGuardianMatter, issue: string, storage: Storage = localStorage): CaseGuardianMatter {
+  const normalized = issue.trim();
+  if (!normalized) return matter;
+  const issues = matter.issues.includes(normalized) ? matter.issues : [...matter.issues, normalized];
+  const updated = { ...matter, issues };
+  updateMatter(updated, storage);
+  return updated;
+}

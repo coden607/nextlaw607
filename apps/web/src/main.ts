@@ -1,13 +1,18 @@
-import { RIGHTS_PACK, type EncounterMode } from "./domain.js";
+import { PROCEDURE_STAGES, RIGHTS_PACK, type CaseGuardianMatter, type EncounterMode, type ProcedureStage } from "./domain.js";
 import { readCases, readPrivacy, writePrivacy } from "./storage.js";
-import { createMatter, matterSummary } from "./caseguardian.js";
+import { addMatterIssue, createMatter, matterSummary, setMatterStage, setNextAppearance, updateMatter } from "./caseguardian.js";
+import { escapeHtml } from "./html.js";
+import { requestCaseNextActions } from "./api.js";
 
 const appNode = document.querySelector<HTMLElement>("#app");
 if (!appNode) throw new Error("#app missing");
 const app: HTMLElement = appNode;
 
+const stageLabel = (stage: ProcedureStage): string => stage.replaceAll("_", " ").replace(/\b\w/g, char => char.toUpperCase());
+
 function renderHome(): void {
   const privacy = readPrivacy();
+  const matters = readCases();
   app.innerHTML = `
     <header class="hero">
       <p class="eyebrow">NextLaw607</p>
@@ -18,12 +23,12 @@ function renderHome(): void {
       <section aria-labelledby="live-heading">
         <h2 id="live-heading">Live encounter</h2>
         <div class="grid">
-          ${Object.values(RIGHTS_PACK).map(card => `<button class="card" data-mode="${card.mode}"><strong>${card.title}</strong><span>Open rights guide</span></button>`).join("")}
+          ${Object.values(RIGHTS_PACK).map(card => `<button class="card" data-mode="${card.mode}"><strong>${escapeHtml(card.title)}</strong><span>Open rights guide</span></button>`).join("")}
         </div>
       </section>
       <section aria-labelledby="case-heading">
         <h2 id="case-heading">Case Guardian</h2>
-        <div id="case-list">${readCases().map(matter => `<article class="card"><strong>${matter.title}</strong><span>${matterSummary(matter)}</span></article>`).join("") || "<p>No local case created yet.</p>"}</div>
+        <div id="case-list" class="grid">${matters.map(matter => `<button class="card" data-matter="${escapeHtml(matter.id)}"><strong>${escapeHtml(matter.title)}</strong><span>${escapeHtml(matterSummary(matter))}</span></button>`).join("") || "<p>No local case created yet.</p>"}</div>
         <button id="create-case" class="card"><strong>Create local case</strong><span>Stored on this device by default</span></button>
       </section>
       <section class="privacy" aria-labelledby="privacy-heading">
@@ -36,9 +41,12 @@ function renderHome(): void {
   app.querySelectorAll<HTMLButtonElement>("[data-mode]").forEach(button => {
     button.addEventListener("click", () => renderRights(button.dataset.mode as EncounterMode));
   });
+  app.querySelectorAll<HTMLButtonElement>("[data-matter]").forEach(button => {
+    button.addEventListener("click", () => renderMatter(button.dataset.matter || ""));
+  });
   app.querySelector<HTMLButtonElement>("#create-case")?.addEventListener("click", () => {
-    createMatter("My case");
-    renderHome();
+    const matter = createMatter("My case");
+    renderMatter(matter.id);
   });
   app.querySelector<HTMLInputElement>("#diagnostics")?.addEventListener("change", event => {
     const checked = (event.currentTarget as HTMLInputElement).checked;
@@ -52,12 +60,90 @@ function renderRights(mode: EncounterMode): void {
     <main class="rights">
       <button id="back" class="back">← Back</button>
       <p class="eyebrow">Live rights mode</p>
-      <h1>${card.title}</h1>
-      <section><h2>Do now</h2><ol>${card.actions.map(item => `<li>${item}</li>`).join("")}</ol></section>
-      <section class="warning"><h2>Safety</h2><ul>${card.never.map(item => `<li>${item}</li>`).join("")}</ul></section>
+      <h1>${escapeHtml(card.title)}</h1>
+      <section><h2>Do now</h2><ol>${card.actions.map(item => `<li>${escapeHtml(item)}</li>`).join("")}</ol></section>
+      <section class="warning"><h2>Safety</h2><ul>${card.never.map(item => `<li>${escapeHtml(item)}</li>`).join("")}</ul></section>
       <p class="source-note">Offline rights pack. Verify current jurisdiction-specific law when connectivity is available.</p>
     </main>`;
   app.querySelector<HTMLButtonElement>("#back")?.addEventListener("click", renderHome);
+}
+
+function findMatter(matterId: string): CaseGuardianMatter | undefined {
+  return readCases().find(matter => matter.id === matterId);
+}
+
+function renderMatter(matterId: string): void {
+  const matter = findMatter(matterId);
+  if (!matter) { renderHome(); return; }
+  const stage = matter.stage || "investigation";
+  app.innerHTML = `
+    <main class="case-editor">
+      <button id="back" class="back">← Cases</button>
+      <p class="eyebrow">Case Guardian · Local first</p>
+      <h1>${escapeHtml(matter.title)}</h1>
+      <p class="source-note">This organizer does not calculate legal deadlines. Enter dates from your actual court papers or verified counsel guidance.</p>
+      <section>
+        <h2>Case posture</h2>
+        <label for="stage">Procedural stage</label>
+        <select id="stage">${PROCEDURE_STAGES.map(item => `<option value="${item}" ${item === stage ? "selected" : ""}>${escapeHtml(stageLabel(item))}</option>`).join("")}</select>
+        <label for="appearance">Next appearance from your paperwork</label>
+        <input id="appearance" type="datetime-local" value="${escapeHtml(matter.nextAppearance || "")}">
+      </section>
+      <section>
+        <h2>Issues to preserve</h2>
+        <ul>${matter.issues.map(issue => `<li>${escapeHtml(issue)}</li>`).join("") || "<li>No issues entered yet.</li>"}</ul>
+        <form id="issue-form">
+          <label for="issue">Add an issue or fact to review</label>
+          <div class="row wrap"><input id="issue" autocomplete="off" placeholder="Example: Search consent disputed"><button type="submit">Add</button></div>
+        </form>
+      </section>
+      <section>
+        <div class="row between wrap"><h2>Next lawful steps</h2><button id="refresh-guidance" type="button">Refresh guidance</button></div>
+        <ul id="next-actions">${matter.nextActions.map(item => `<li>${escapeHtml(item)}</li>`).join("")}</ul>
+        <p id="guidance-status" class="source-note" role="status" aria-live="polite">Local guidance shown. Remote/current-law verification is separate.</p>
+      </section>
+    </main>`;
+
+  app.querySelector<HTMLButtonElement>("#back")?.addEventListener("click", renderHome);
+  app.querySelector<HTMLSelectElement>("#stage")?.addEventListener("change", event => {
+    setMatterStage(matter, (event.currentTarget as HTMLSelectElement).value as ProcedureStage);
+    renderMatter(matter.id);
+  });
+  app.querySelector<HTMLInputElement>("#appearance")?.addEventListener("change", event => {
+    setNextAppearance(matter, (event.currentTarget as HTMLInputElement).value);
+    renderMatter(matter.id);
+  });
+  app.querySelector<HTMLFormElement>("#issue-form")?.addEventListener("submit", event => {
+    event.preventDefault();
+    const input = app.querySelector<HTMLInputElement>("#issue");
+    if (input) addMatterIssue(matter, input.value);
+    renderMatter(matter.id);
+  });
+  app.querySelector<HTMLButtonElement>("#refresh-guidance")?.addEventListener("click", () => refreshCaseGuidance(matter.id));
+}
+
+async function refreshCaseGuidance(matterId: string): Promise<void> {
+  const matter = findMatter(matterId);
+  const status = app.querySelector<HTMLElement>("#guidance-status");
+  if (!matter) return;
+  if (status) status.textContent = "Refreshing procedural guidance…";
+  try {
+    const response = await requestCaseNextActions({
+      matterId: matter.id,
+      jurisdiction: matter.jurisdiction,
+      stage: matter.stage || "investigation",
+      nextAppearance: matter.nextAppearance,
+      unresolvedIssues: matter.issues,
+    });
+    updateMatter({ ...matter, nextActions: response.next_actions });
+    renderMatter(matter.id);
+    const nextStatus = app.querySelector<HTMLElement>("#guidance-status");
+    if (nextStatus) nextStatus.textContent = response.deadline_source_verified
+      ? "Guidance refreshed with verified deadline source metadata."
+      : "Guidance refreshed. No legal deadline was automatically asserted.";
+  } catch {
+    if (status) status.textContent = "Guidance could not refresh. Your local case data is unchanged and remains available offline.";
+  }
 }
 
 renderHome();
