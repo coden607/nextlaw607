@@ -130,7 +130,10 @@ class SourceRegistry:
     def _applies_to(source: LegalSource, jurisdiction: str | None) -> bool:
         if jurisdiction is None:
             return True
-        return source.jurisdiction in {jurisdiction, "ALL"}
+        applicable = {jurisdiction, "ALL"}
+        if jurisdiction == "NY":
+            applicable.add("US")
+        return source.jurisdiction in applicable
 
     def provider_identity(self, url: str, jurisdiction: str | None = None) -> str | None:
         matches = [
