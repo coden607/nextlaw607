@@ -22,6 +22,17 @@ class ProcedureStage(str, Enum):
     POST_CONVICTION = "post_conviction"
 
 
+class DeadlineKind(str, Enum):
+    GENERAL = "general"
+    DISCOVERY = "discovery"
+    MOTION = "motion"
+    HEARING = "hearing"
+    TRIAL = "trial"
+    SENTENCING = "sentencing"
+    APPEAL = "appeal"
+    POST_CONVICTION = "post_conviction"
+
+
 @dataclass(frozen=True)
 class CaseEvent:
     stage: ProcedureStage
@@ -38,6 +49,7 @@ class CaseDeadline:
     due_at: datetime
     source: str
     source_kind: str
+    kind: DeadlineKind = DeadlineKind.GENERAL
 
 
 @dataclass
@@ -82,7 +94,15 @@ class CriminalCaseState:
         self.next_appearance_source = source.strip()
         self.next_appearance_source_kind = source_kind
 
-    def add_deadline(self, title: str, due_at: datetime, *, source: str, source_kind: str) -> None:
+    def add_deadline(
+        self,
+        title: str,
+        due_at: datetime,
+        *,
+        source: str,
+        source_kind: str,
+        kind: DeadlineKind = DeadlineKind.GENERAL,
+    ) -> None:
         if not title.strip():
             raise ValueError("deadline requires a title")
         if not source.strip():
@@ -96,12 +116,15 @@ class CriminalCaseState:
         }
         if source_kind not in trusted_kinds:
             raise ValueError("deadline requires a trusted source kind")
+        if not isinstance(kind, DeadlineKind):
+            raise ValueError("deadline kind must be classified")
         self.deadlines.append(
             CaseDeadline(
                 title=title.strip(),
                 due_at=due_at,
                 source=source.strip(),
                 source_kind=source_kind,
+                kind=kind,
             )
         )
         self.deadlines.sort(key=lambda deadline: deadline.due_at)
@@ -148,7 +171,8 @@ class CriminalCaseState:
             label = "Source-backed deadline"
             if as_of is not None:
                 label = "OVERDUE source-backed deadline" if deadline.due_at < as_of else "Upcoming source-backed deadline"
+            kind_label = deadline.kind.value.replace("_", " ")
             deadline_actions.append(
-                f"{label}: {deadline.title}: {deadline.due_at.isoformat()} — source: {deadline.source}."
+                f"{label} ({kind_label} deadline): {deadline.title}: {deadline.due_at.isoformat()} — source: {deadline.source}."
             )
         return stage_actions[self.stage] + appearance + tuple(deadline_actions) + common
