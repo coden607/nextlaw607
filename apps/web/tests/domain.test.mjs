@@ -48,3 +48,33 @@ test("service worker precaches every critical compiled module",async()=>{
   const sw=await readFile(new URL("../sw.js",import.meta.url),"utf8");
   for (const asset of ["/dist/main.js","/dist/domain.js","/dist/privacy.js","/dist/storage.js","/dist/api.js","/dist/caseguardian.js","/dist/html.js"]) assert.ok(sw.includes(asset),asset);
 });
+
+test("local data can be exported, cleared, and restored without cloud access",async()=>{
+  const { exportLocalData, importLocalData, clearLocalData, writeCases, writePrivacy, readCases, readPrivacy } = await import("../dist/storage.js");
+  const storage=memoryStorage();
+  const matter=createMatter("People v Export","NY",storage);
+  writePrivacy({diagnostics:true,cloudSync:false,cloudAI:false,localOnly:true},storage);
+  const snapshot=exportLocalData(storage);
+  assert.equal(snapshot.schemaVersion,1);
+  assert.equal(snapshot.cases[0].id,matter.id);
+  clearLocalData(storage);
+  assert.deepEqual(readCases(storage),[]);
+  assert.equal(readPrivacy(storage).diagnostics,false);
+  importLocalData(snapshot,storage);
+  assert.equal(readCases(storage)[0].title,"People v Export");
+  assert.equal(readPrivacy(storage).diagnostics,true);
+});
+
+test("invalid local-data snapshot fails closed",async()=>{
+  const { importLocalData } = await import("../dist/storage.js");
+  assert.throws(()=>importLocalData({schemaVersion:99,cases:[],privacy:{}},memoryStorage()),/unsupported local data schema/i);
+});
+
+test("founder entitlement is lifetime, billing-free, and not normally revocable",async()=>{
+  const { FOUNDER_ENTITLEMENT, hasPremiumAccess } = await import("../dist/entitlements.js");
+  assert.equal(FOUNDER_ENTITLEMENT.source,"founder_lifetime_grant");
+  assert.equal(FOUNDER_ENTITLEMENT.expiresAt,null);
+  assert.equal(FOUNDER_ENTITLEMENT.revocable,false);
+  assert.equal(FOUNDER_ENTITLEMENT.billingRequired,false);
+  assert.equal(hasPremiumAccess(FOUNDER_ENTITLEMENT),true);
+});
