@@ -175,6 +175,17 @@ def test_next_appearance_rejects_date_before_source_verification():
         )
 
 
+def test_next_appearance_rejects_unregistered_court_source_url():
+    case = CriminalCaseState("m1", "NY", stage=ProcedureStage.PRETRIAL)
+    with pytest.raises(ValueError, match="court appearance requires official procedure source URL"):
+        case.set_next_appearance(
+            datetime(2026, 9, 12, 9, 0, tzinfo=timezone.utc),
+            source="court notice",
+            source_kind="court_notice",
+            source_url="https://example.com/not-a-court-source",
+        )
+
+
 def test_record_rejects_event_timestamp_after_explicit_as_of():
     case = CriminalCaseState("m1", "NY")
     event = CaseEvent(
