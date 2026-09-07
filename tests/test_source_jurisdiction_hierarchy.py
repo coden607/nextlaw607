@@ -22,3 +22,13 @@ def test_us_scope_does_not_treat_state_only_sources_as_federal_sources():
         "https://www.nycourts.gov/reporter/3dseries/2024/example.htm",
         "US",
     )
+
+
+def test_registered_legal_sources_require_https_transport():
+    registry = SourceRegistry()
+    insecure = "http://www.nycourts.gov/reporter/3dseries/2024/example.htm"
+
+    assert not registry.is_registered_url(insecure)
+    assert not registry.is_official_url(insecure, "NY")
+    assert not registry.supports(insecure, "primary_text", "NY")
+    assert registry.provider_identity(insecure, "NY") is None
