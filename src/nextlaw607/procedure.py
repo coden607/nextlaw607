@@ -68,6 +68,7 @@ class CriminalCaseState:
     next_appearance: datetime | None = None
     next_appearance_source: str | None = None
     next_appearance_source_kind: str | None = None
+    next_appearance_source_url: str | None = None
     next_appearance_verified_at: datetime | None = None
 
     def record(self, event: CaseEvent, *, as_of: datetime | None = None) -> None:
@@ -101,6 +102,7 @@ class CriminalCaseState:
         *,
         source: str,
         source_kind: str | None = None,
+        source_url: str | None = None,
         verified_at: datetime | None = None,
         as_of: datetime | None = None,
     ) -> None:
@@ -109,6 +111,18 @@ class CriminalCaseState:
         trusted_kinds = {"court_notice", "docket", "counsel_confirmation"}
         if source_kind not in trusted_kinds:
             raise ValueError("next appearance requires a trusted source kind")
+        normalized_source_url = source_url.strip() if source_url and source_url.strip() else None
+        if normalized_source_url is not None and source_kind in {"court_notice", "docket"}:
+            registry = SourceRegistry()
+            if not (
+                registry.is_official_url(normalized_source_url, self.jurisdiction)
+                and registry.supports(
+                    normalized_source_url,
+                    SourceCapability.PROCEDURE,
+                    self.jurisdiction,
+                )
+            ):
+                raise ValueError("court appearance requires official procedure source URL")
         if verified_at is not None:
             if as_of is not None and verified_at > as_of:
                 raise ValueError("appearance source verification is in the future")
@@ -117,6 +131,7 @@ class CriminalCaseState:
         self.next_appearance = when
         self.next_appearance_source = source.strip()
         self.next_appearance_source_kind = source_kind
+        self.next_appearance_source_url = normalized_source_url
         self.next_appearance_verified_at = verified_at
 
     def add_deadline(
