@@ -135,6 +135,29 @@ def test_past_dated_verified_appearance_requires_current_recheck():
     assert "court notice dated 2026-09-01" in text
 
 
+def test_next_appearance_rejects_future_source_verification_timestamp():
+    case = CriminalCaseState("m1", "NY", stage=ProcedureStage.PRETRIAL)
+    with pytest.raises(ValueError, match="appearance source verification is in the future"):
+        case.set_next_appearance(
+            datetime(2026, 9, 12, 9, 0, tzinfo=timezone.utc),
+            source="court notice",
+            source_kind="court_notice",
+            verified_at=datetime(2026, 9, 8, 9, 0, tzinfo=timezone.utc),
+            as_of=datetime(2026, 9, 7, 9, 0, tzinfo=timezone.utc),
+        )
+
+
+def test_next_appearance_rejects_date_before_source_verification():
+    case = CriminalCaseState("m1", "NY", stage=ProcedureStage.PRETRIAL)
+    with pytest.raises(ValueError, match="appearance predates source verification"):
+        case.set_next_appearance(
+            datetime(2026, 9, 8, 9, 0, tzinfo=timezone.utc),
+            source="court notice",
+            source_kind="court_notice",
+            verified_at=datetime(2026, 9, 9, 9, 0, tzinfo=timezone.utc),
+        )
+
+
 def test_record_rejects_event_timestamp_after_explicit_as_of():
     case = CriminalCaseState("m1", "NY")
     event = CaseEvent(
