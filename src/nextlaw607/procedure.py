@@ -43,6 +43,7 @@ class CaseEvent:
     source: str | None = None
     notes: str | None = None
     source_kind: str | None = None
+    verified_at: datetime | None = None
 
 
 @dataclass(frozen=True)
@@ -84,6 +85,11 @@ class CriminalCaseState:
             raise ValueError("event source requires a trusted source kind")
         if event.source_kind is not None and not has_source:
             raise ValueError("event source kind requires a source")
+        if event.verified_at is not None:
+            if not has_source or event.source_kind is None:
+                raise ValueError("event verification requires classified provenance")
+            if as_of is not None and event.verified_at > as_of:
+                raise ValueError("event source verification is in the future")
         if self.events and event.occurred_at < self.events[-1].occurred_at:
             raise ValueError("events must be recorded in chronological order")
         self.events.append(event)
