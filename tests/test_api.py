@@ -21,3 +21,41 @@ def test_case_endpoint_does_not_invent_deadline():
     body=client.post('/api/case/next-actions',json={'matter_id':'m1','stage':'appearance_ticket'}).json()
     assert body['deadline_source_verified'] is False
     assert body['next_appearance'] is None
+
+
+def test_session_without_credentials_is_guest_and_free():
+    response = client.get('/api/session')
+    assert response.status_code == 200
+    body = response.json()
+    assert body == {
+        'identity': {'kind': 'guest', 'subject': None, 'provider': 'local'},
+        'entitlement': {
+            'tier': 'free',
+            'source': 'default_free',
+            'expires_at': None,
+            'revocable': True,
+            'billing_required': False,
+        },
+        'premium_access': False,
+    }
+
+
+def test_unverified_bearer_token_never_becomes_authenticated():
+    response = client.get('/api/session', headers={'Authorization': 'Bearer definitely-not-verified'})
+    assert response.status_code == 401
+    assert response.json()['detail'] == 'identity verification failed'
+
+
+def test_client_cannot_self_assert_premium_entitlement():
+    response = client.get(
+        '/api/session',
+        headers={
+            'X-NextLaw-Tier': 'premium',
+            'X-NextLaw-Entitlement-Source': 'founder_lifetime_grant',
+        },
+    )
+    assert response.status_code == 200
+    body = response.json()
+    assert body['identity']['kind'] == 'guest'
+    assert body['entitlement']['tier'] == 'free'
+    assert body['premium_access'] is False
