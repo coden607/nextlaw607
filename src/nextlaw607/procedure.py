@@ -43,6 +43,7 @@ class CaseEvent:
     source: str | None = None
     notes: str | None = None
     source_kind: str | None = None
+    source_url: str | None = None
     verified_at: datetime | None = None
 
 
@@ -91,6 +92,18 @@ class CriminalCaseState:
                 raise ValueError("event verification requires classified provenance")
             if as_of is not None and event.verified_at > as_of:
                 raise ValueError("event source verification is in the future")
+            if event.source_kind in {"court_notice", "docket"}:
+                normalized_source_url = event.source_url.strip() if event.source_url and event.source_url.strip() else None
+                registry = SourceRegistry()
+                if not normalized_source_url or not (
+                    registry.is_official_url(normalized_source_url, self.jurisdiction)
+                    and registry.supports(
+                        normalized_source_url,
+                        SourceCapability.PROCEDURE,
+                        self.jurisdiction,
+                    )
+                ):
+                    raise ValueError("verified court event requires official procedure source URL")
         if self.events and event.occurred_at < self.events[-1].occurred_at:
             raise ValueError("events must be recorded in chronological order")
         self.events.append(event)
