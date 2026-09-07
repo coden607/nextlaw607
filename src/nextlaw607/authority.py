@@ -142,6 +142,14 @@ class CitationFirewall:
                 registry.provider_identity(source, authority.jurisdiction)
                 for source in authority.verification_sources
             }
+            if registry.supports(
+                authority.source_url,
+                SourceCapability.PRIMARY_TEXT,
+                authority.jurisdiction,
+            ):
+                verification_provider_identities.add(
+                    registry.provider_identity(authority.source_url, authority.jurisdiction)
+                )
             independent_history_providers = {
                 provider
                 for provider in history_provider_identities
