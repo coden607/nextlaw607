@@ -60,6 +60,63 @@ def test_browser_evidence_requires_exact_revision_and_all_browser_gates(tmp_path
     assert any("revision" in issue for issue in issues)
 
 
+def test_browser_evidence_rejects_console_or_request_failures_even_if_summary_gates_claim_pass(tmp_path: Path):
+    import json
+    from nextlaw607.release_checks import browser_evidence_issues
+    continuity = tmp_path / ".continuity"
+    continuity.mkdir()
+    (continuity / "browser-evidence.json").write_text(json.dumps({
+        "revision": "abc123",
+        "captured_at": "2026-09-07T09:00:00Z",
+        "tool": "playwright+axe-core+performance-observer",
+        "e2e_passed": True,
+        "accessibility_passed": True,
+        "pwa_passed": True,
+        "performance": {"lcp_ms": 1800, "cls": 0.03, "inp_ms": 120},
+        "details": {
+            "accessibility_violations": [],
+            "console_errors": ["uncaught error"],
+            "request_failures": ["GET /api failed"],
+            "offline_reload_passed": True,
+        },
+    }), encoding="utf-8")
+    issues = browser_evidence_issues(
+        tmp_path,
+        metadata={"performance_budgets": {"lcp_ms": 2500, "cls": 0.1, "inp_ms": 200}},
+        revision="abc123",
+    )
+    assert "browser evidence contains console errors" in issues
+    assert "browser evidence contains request failures" in issues
+
+
+def test_browser_evidence_requires_explicit_offline_reload_proof(tmp_path: Path):
+    import json
+    from nextlaw607.release_checks import browser_evidence_issues
+    continuity = tmp_path / ".continuity"
+    continuity.mkdir()
+    (continuity / "browser-evidence.json").write_text(json.dumps({
+        "revision": "abc123",
+        "captured_at": "2026-09-07T09:00:00Z",
+        "tool": "playwright+axe-core+performance-observer",
+        "e2e_passed": True,
+        "accessibility_passed": True,
+        "pwa_passed": True,
+        "performance": {"lcp_ms": 1800, "cls": 0.03, "inp_ms": 120},
+        "details": {
+            "accessibility_violations": [],
+            "console_errors": [],
+            "request_failures": [],
+            "offline_reload_passed": False,
+        },
+    }), encoding="utf-8")
+    issues = browser_evidence_issues(
+        tmp_path,
+        metadata={"performance_budgets": {"lcp_ms": 2500, "cls": 0.1, "inp_ms": 200}},
+        revision="abc123",
+    )
+    assert "browser evidence offline reload failed or missing" in issues
+
+
 def test_browser_evidence_passes_when_provenance_and_budgets_match(tmp_path: Path):
     import json
     from nextlaw607.release_checks import browser_evidence_issues
@@ -73,6 +130,12 @@ def test_browser_evidence_passes_when_provenance_and_budgets_match(tmp_path: Pat
         "accessibility_passed": True,
         "pwa_passed": True,
         "performance": {"lcp_ms": 1800, "cls": 0.03, "inp_ms": 120},
+        "details": {
+            "accessibility_violations": [],
+            "console_errors": [],
+            "request_failures": [],
+            "offline_reload_passed": True,
+        },
     }), encoding="utf-8")
     assert browser_evidence_issues(
         tmp_path,
