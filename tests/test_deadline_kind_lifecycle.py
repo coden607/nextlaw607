@@ -62,3 +62,32 @@ def test_statutory_deadline_accepts_registered_official_primary_text_source():
     )
 
     assert case.deadlines[0].source_url == source_url
+
+
+def test_deadline_rejects_due_date_before_source_was_verified():
+    case = CriminalCaseState("m1", "NY", stage=ProcedureStage.MOTIONS)
+
+    with pytest.raises(ValueError, match="deadline predates source verification"):
+        case.add_deadline(
+            "motion deadline",
+            datetime(2026, 9, 10, tzinfo=timezone.utc),
+            source="court scheduling order",
+            source_kind="court_notice",
+            kind=DeadlineKind.MOTION,
+            verified_at=datetime(2026, 9, 11, tzinfo=timezone.utc),
+        )
+
+
+def test_deadline_rejects_future_source_verification_timestamp():
+    case = CriminalCaseState("m1", "NY", stage=ProcedureStage.MOTIONS)
+
+    with pytest.raises(ValueError, match="deadline source verification is in the future"):
+        case.add_deadline(
+            "motion deadline",
+            datetime(2026, 10, 10, tzinfo=timezone.utc),
+            source="court scheduling order",
+            source_kind="court_notice",
+            kind=DeadlineKind.MOTION,
+            verified_at=datetime(2026, 9, 8, tzinfo=timezone.utc),
+            as_of=datetime(2026, 9, 7, tzinfo=timezone.utc),
+        )
