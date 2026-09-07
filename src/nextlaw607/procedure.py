@@ -67,6 +67,7 @@ class CriminalCaseState:
     next_appearance: datetime | None = None
     next_appearance_source: str | None = None
     next_appearance_source_kind: str | None = None
+    next_appearance_verified_at: datetime | None = None
 
     def record(self, event: CaseEvent, *, as_of: datetime | None = None) -> None:
         if as_of is not None and event.occurred_at > as_of:
@@ -88,15 +89,29 @@ class CriminalCaseState:
         self.events.append(event)
         self.stage = event.stage
 
-    def set_next_appearance(self, when: datetime, *, source: str, source_kind: str | None = None) -> None:
+    def set_next_appearance(
+        self,
+        when: datetime,
+        *,
+        source: str,
+        source_kind: str | None = None,
+        verified_at: datetime | None = None,
+        as_of: datetime | None = None,
+    ) -> None:
         if not source.strip():
             raise ValueError("next appearance requires a source")
         trusted_kinds = {"court_notice", "docket", "counsel_confirmation"}
         if source_kind not in trusted_kinds:
             raise ValueError("next appearance requires a trusted source kind")
+        if verified_at is not None:
+            if as_of is not None and verified_at > as_of:
+                raise ValueError("appearance source verification is in the future")
+            if when < verified_at:
+                raise ValueError("appearance predates source verification")
         self.next_appearance = when
         self.next_appearance_source = source.strip()
         self.next_appearance_source_kind = source_kind
+        self.next_appearance_verified_at = verified_at
 
     def add_deadline(
         self,
