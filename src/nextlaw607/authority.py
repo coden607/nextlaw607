@@ -60,6 +60,8 @@ class CitationFirewall:
             reasons.append("secondary source cannot verify authority")
 
         registry = SourceRegistry()
+        if authority.source_url and not registry.is_registered_url(authority.source_url):
+            reasons.append("authority source URL is not registered")
         official_text_verified = (
             registry.is_official_url(authority.source_url, authority.jurisdiction)
             and registry.supports(
