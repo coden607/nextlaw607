@@ -46,12 +46,23 @@ const downloadPromise = page.waitForEvent("download");
 await page.locator("#export-data").click();
 const download = await downloadPromise;
 if (!download.suggestedFilename().endsWith(".json")) throw new Error("local data export did not produce JSON download");
+const exportedPath = await download.path();
+if (!exportedPath) throw new Error("local data export was not saved by browser");
 
 page.once("dialog", dialog => dialog.accept());
 await page.locator("#delete-data").click();
 await page.getByText("No local case created yet.").waitFor({ state: "visible" });
 const casesCleared = await page.evaluate(() => localStorage.getItem("nextlaw607.cases.v1") === null);
 if (!casesCleared) throw new Error("delete local data did not clear case storage");
+
+await page.locator("#import-data").setInputFiles(exportedPath);
+await page.locator("button[data-matter]").first().waitFor({ state: "visible" });
+const casesRestored = await page.evaluate(() => {
+  const raw = localStorage.getItem("nextlaw607.cases.v1");
+  if (!raw) return false;
+  try { return Array.isArray(JSON.parse(raw)) && JSON.parse(raw).length > 0; } catch { return false; }
+});
+if (!casesRestored) throw new Error("import local data did not restore case storage");
 
 const axe = await new AxeBuilder({ page }).analyze();
 const seriousA11y = axe.violations.filter(v => ["serious", "critical"].includes(v.impact));
@@ -93,6 +104,7 @@ const evidence = {
     offline_reload_passed: offlinePassed,
     local_data_export_passed: true,
     local_data_delete_passed: casesCleared,
+    local_data_restore_passed: casesRestored,
   },
 };
 await writeFile(new URL("../../../.continuity/browser-evidence.json", import.meta.url), `${JSON.stringify(evidence, null, 2)}\n`, "utf8");
