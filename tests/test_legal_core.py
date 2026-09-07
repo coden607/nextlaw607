@@ -8,7 +8,7 @@ from nextlaw607.suppression import SuppressionAnalyzer, SuppressionFacts
 
 
 def auth(**kw):
-    base=dict(citation="1 N.Y.3d 1", title="People v Example", court="NY Court of Appeals", jurisdiction="NY", decision_date=date(2024,1,1), source_url="https://nycourts.gov/example", source_tier=SourceTier.OFFICIAL, holding="A verified holding.", status=AuthorityStatus.GOOD_LAW, last_verified_on=date.today(), verification_sources=("official",), citation_history_checked_on=date.today(), negative_treatment_found=False, history_sources=("https://www.courtlistener.com/opinion/123/example/",))
+    base=dict(citation="1 N.Y.3d 1", title="People v Example", court="NY Court of Appeals", jurisdiction="NY", decision_date=date(2024,1,1), source_url="https://nycourts.gov/example", source_tier=SourceTier.OFFICIAL, holding="A verified holding.", status=AuthorityStatus.GOOD_LAW, last_verified_on=date.today(), verification_sources=("https://nycourts.gov/example",), citation_history_checked_on=date.today(), negative_treatment_found=False, history_sources=("https://www.courtlistener.com/opinion/123/example/",))
     base.update(kw); return LegalAuthority(**base)
 
 def test_verified_authority_passes(): assert CitationFirewall().verify(auth()).verified
@@ -251,3 +251,10 @@ def test_case_deadline_rejects_unclassified_source_and_sorts_chronologically():
         source_kind="docket",
     )
     assert [deadline.title for deadline in case.deadlines] == ["earlier filing", "later filing"]
+
+
+def test_verification_sources_must_be_registered_primary_text_urls():
+    candidate = auth(verification_sources=("official",))
+    decision = CitationFirewall().verify(candidate)
+    assert not decision.verified
+    assert any("verification source" in reason for reason in decision.reasons)
