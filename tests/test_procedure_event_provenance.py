@@ -47,6 +47,21 @@ def test_record_accepts_classified_event_provenance():
     assert case.events[-1].source_kind == "docket"
 
 
+def test_record_rejects_unverified_court_event_with_unregistered_source_url():
+    case = CriminalCaseState("m1", "NY")
+    event = CaseEvent(
+        stage=ProcedureStage.ARRAIGNMENT,
+        occurred_at=datetime(2026, 9, 1, 9, 0, tzinfo=timezone.utc),
+        title="arraignment",
+        source="court docket entry 42",
+        source_kind="docket",
+        source_url="https://example.com/not-a-court-docket",
+    )
+
+    with pytest.raises(ValueError, match="court event requires official procedure source URL"):
+        case.record(event)
+
+
 def test_record_preserves_later_verification_of_historical_event():
     case = CriminalCaseState("m1", "NY")
     verified_at = datetime(2026, 9, 7, 10, 0, tzinfo=timezone.utc)
