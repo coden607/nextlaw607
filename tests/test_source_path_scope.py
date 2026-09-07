@@ -29,3 +29,13 @@ def test_registered_source_rejects_unregistered_subdomain_of_trusted_domain():
     assert registry.is_official_url(unregistered_subdomain, "NY") is False
     assert registry.provider_identity(unregistered_subdomain, "NY") is None
     assert registry.supports(unregistered_subdomain, SourceCapability.PRIMARY_TEXT, "NY") is False
+
+
+def test_registered_source_rejects_embedded_url_credentials():
+    registry = SourceRegistry()
+    credential_bearing = "https://user:secret@www.nycourts.gov/opinion/example"
+
+    assert registry.is_registered_url(credential_bearing) is False
+    assert registry.is_official_url(credential_bearing, "NY") is False
+    assert registry.provider_identity(credential_bearing, "NY") is None
+    assert registry.supports(credential_bearing, SourceCapability.PRIMARY_TEXT, "NY") is False
