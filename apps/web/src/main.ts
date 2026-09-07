@@ -1,5 +1,5 @@
 import { PROCEDURE_STAGES, RIGHTS_PACK, type CaseGuardianMatter, type EncounterMode, type ProcedureStage } from "./domain.js";
-import { clearLocalData, exportLocalData, readCases, readPrivacy, writePrivacy } from "./storage.js";
+import { clearLocalData, exportLocalData, importLocalData, readCases, readPrivacy, writePrivacy } from "./storage.js";
 import { addMatterIssue, createMatter, matterSummary, setMatterStage, setNextAppearance, updateMatter } from "./caseguardian.js";
 import { escapeHtml } from "./html.js";
 import { requestCaseNextActions } from "./api.js";
@@ -28,6 +28,20 @@ function deleteLocalData(): void {
   if (!confirmed) return;
   clearLocalData();
   renderHome();
+}
+
+async function restoreLocalData(file: File): Promise<void> {
+  const status = app.querySelector<HTMLElement>("#data-status");
+  try {
+    const text = await file.text();
+    const snapshot = JSON.parse(text) as unknown;
+    importLocalData(snapshot);
+    renderHome();
+    const restoredStatus = app.querySelector<HTMLElement>("#data-status");
+    if (restoredStatus) restoredStatus.textContent = "Local data backup restored on this device.";
+  } catch {
+    if (status) status.textContent = "Backup could not be restored. Existing local data was not replaced.";
+  }
 }
 
 function renderHome(): void {
@@ -60,7 +74,9 @@ function renderHome(): void {
           <button id="export-data" type="button">Export my local data</button>
           <button id="delete-data" type="button">Delete local data</button>
         </div>
-        <p class="source-note">Export creates a JSON backup you control. Delete removes NextLaw607 case and privacy records stored in this browser on this device.</p>
+        <label for="import-data">Restore a NextLaw607 JSON backup</label>
+        <input id="import-data" type="file" accept="application/json,.json">
+        <p id="data-status" class="source-note" role="status" aria-live="polite">Export creates a JSON backup you control. Restore validates the backup before replacing NextLaw607 local records.</p>
       </section>
     </main>`;
 
@@ -80,6 +96,11 @@ function renderHome(): void {
   });
   app.querySelector<HTMLButtonElement>("#export-data")?.addEventListener("click", downloadLocalData);
   app.querySelector<HTMLButtonElement>("#delete-data")?.addEventListener("click", deleteLocalData);
+  app.querySelector<HTMLInputElement>("#import-data")?.addEventListener("change", event => {
+    const input = event.currentTarget as HTMLInputElement;
+    const file = input.files?.[0];
+    if (file) void restoreLocalData(file);
+  });
 }
 
 function renderRights(mode: EncounterMode): void {
