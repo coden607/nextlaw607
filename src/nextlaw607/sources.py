@@ -119,8 +119,12 @@ class SourceRegistry:
 
     @staticmethod
     def _host_matches(url: str, base_url: str) -> bool:
-        host = (urlparse(url).hostname or "").lower()
-        source_host = (urlparse(base_url).hostname or "").lower()
+        parsed = urlparse(url)
+        source_parsed = urlparse(base_url)
+        if parsed.scheme.lower() != "https" or source_parsed.scheme.lower() != "https":
+            return False
+        host = (parsed.hostname or "").lower()
+        source_host = (source_parsed.hostname or "").lower()
         if not host or not source_host:
             return False
         root = source_host[4:] if source_host.startswith("www.") else source_host
