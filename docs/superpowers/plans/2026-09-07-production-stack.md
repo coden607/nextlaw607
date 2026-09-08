@@ -25,37 +25,37 @@
 
 **Interfaces:** `SupabaseEntitlementRepository.lookup(subject: str) -> Mapping[str, Any] | None`; `entitlement_provider_from_environment()` injects this lookup into `RepositoryEntitlementProvider`.
 
-- [ ] Add failing tests proving server credentials perform an authoritative subject-filtered lookup, malformed/non-200 responses fail closed, and client metadata cannot grant access.
-- [ ] Run CI and confirm RED is caused by the missing repository.
-- [ ] Implement minimal HTTPS-only Supabase REST repository and wire it from environment.
-- [ ] Add schema/RLS migration: entitlement rows keyed to `auth.users`, deny direct client writes, service/server ownership for grants.
-- [ ] Add `SUPABASE_SECRET_KEY` to `.env.example` as server-only.
-- [ ] Rerun full verification and confirm GREEN.
+- [x] Add failing tests proving server credentials perform an authoritative subject-filtered lookup, malformed/non-200 responses fail closed, and client metadata cannot grant access.
+- [x] Run CI and confirm RED is caused by the missing repository.
+- [x] Implement minimal HTTPS-only Supabase REST repository and wire it from environment.
+- [x] Add schema/RLS migration: entitlement rows keyed to `auth.users`, deny direct client writes, service/server ownership for grants.
+- [x] Add `SUPABASE_SECRET_KEY` to `.env.example` as server-only.
+- [x] Rerun full verification and confirm GREEN.
 
 ### Task 2: Stack manifest and CI regression gate
 **Files:** create `config/production-stack.json`, `src/nextlaw607/stack_contract.py`, `tests/test_stack_contract.py`; modify `scripts/verify.sh`.
 
 **Interfaces:** manifest states `required|evaluate`, lifecycle `planned|implemented|configured|verified`, environment variable names, tests/evidence paths.
 
-- [ ] Write failing tests for omitted required components and invalid status transitions.
-- [ ] Observe RED.
-- [ ] Implement validator and baseline manifest covering every approved component.
-- [ ] Add validation to `verify.sh` and observe GREEN.
+- [x] Write failing tests for omitted required components and invalid status transitions.
+- [x] Observe RED.
+- [x] Implement validator and baseline manifest covering every approved component.
+- [x] Add validation to `verify.sh` and observe GREEN.
 
 ### Task 3: Ingestion boundary
 **Files:** create `src/nextlaw607/ingestion/` adapters and tests.
 
-- [ ] RED tests: Docling/Crawl4AI outputs are untrusted candidates and cannot become verified authorities directly.
-- [ ] Implement adapters with provenance/content hashing and bounded inputs.
-- [ ] Route candidate legal material through CitationFirewall; verify GREEN.
+- [x] RED tests: Docling/Crawl4AI outputs are untrusted candidates and cannot become verified authorities directly.
+- [ ] Implement concrete Docling and Crawl4AI runtime adapters with provenance/content hashing and bounded inputs. The shared candidate boundary is implemented; external library bindings remain pending.
+- [x] Route candidate legal material through CitationFirewall; verify GREEN.
 
 ### Task 4: Typed agent workflow
 **Files:** create `src/nextlaw607/agents/` and workflow tests.
 
-- [ ] RED tests for typed state, deterministic legal verification node, tool allowlisting, and fail-closed transitions.
-- [ ] Add Pydantic AI agent boundary and LangGraph state machine.
+- [x] RED tests for typed state, deterministic legal verification node, tool allowlisting, and fail-closed transitions.
+- [ ] Add concrete Pydantic AI agent boundary and LangGraph state machine. The deterministic typed orchestration core is implemented and verified; framework bindings remain pending.
 - [ ] Keep Archon as development/harness integration, not per-request legal authority.
-- [ ] Verify model/tool failures never bypass legal verification.
+- [x] Verify model/tool failures never bypass legal verification in the deterministic orchestration core.
 
 ### Task 5: Mem0 memory isolation
 **Files:** create memory adapter/config/tests.
