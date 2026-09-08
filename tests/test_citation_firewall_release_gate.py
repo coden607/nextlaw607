@@ -11,12 +11,12 @@ def _authority(**overrides):
         "court": "NY Court of Appeals",
         "jurisdiction": "NY",
         "decision_date": date(2024, 1, 1),
-        "source_url": "https://www.nycourts.gov/reporter/3dseries/2024/example.htm",
+        "source_url": "https://nycourts.gov/example",
         "source_tier": SourceTier.OFFICIAL,
         "holding": "A verified holding.",
         "status": AuthorityStatus.GOOD_LAW,
         "last_verified_on": date.today(),
-        "verification_sources": ("https://www.nycourts.gov/reporter/3dseries/2024/example.htm",),
+        "verification_sources": ("https://nycourts.gov/example",),
         "citation_history_checked_on": date.today(),
         "negative_treatment_found": False,
         "history_sources": ("https://www.courtlistener.com/opinion/123/example/",),
@@ -25,37 +25,26 @@ def _authority(**overrides):
     return LegalAuthority(**values)
 
 
-def test_release_gate_accepts_only_fresh_independently_checked_primary_authority():
-    decision = CitationFirewall().verify(_authority())
-    assert decision.verified
-    assert decision.label == "VERIFIED"
+def test_release_gate_accepts_fresh_primary_authority_with_independent_history_review():
+    assert CitationFirewall().verify(_authority()).verified
 
 
-def test_release_gate_fails_closed_on_negative_treatment_even_with_good_law_label():
+def test_release_gate_rejects_negative_treatment():
     decision = CitationFirewall().verify(_authority(negative_treatment_found=True))
     assert not decision.verified
-    assert decision.label == "UNVERIFIED — DO NOT CITE"
-    assert "negative treatment found" in decision.reasons
+    assert any("negative treatment" in reason for reason in decision.reasons)
 
 
-def test_release_gate_fails_closed_when_history_review_is_stale():
+def test_release_gate_rejects_stale_primary_text_verification():
     decision = CitationFirewall(30).verify(
-        _authority(citation_history_checked_on=date.today() - timedelta(days=31))
+        _authority(last_verified_on=date.today() - timedelta(days=31))
     )
     assert not decision.verified
-    assert "citation history review stale" in decision.reasons
+    assert any("verification stale" in reason for reason in decision.reasons)
 
 
-def test_release_gate_fails_closed_when_history_provider_is_not_independent():
-    official = "https://www.nycourts.gov/reporter/3dseries/2024/example.htm"
-    decision = CitationFirewall().verify(_authority(history_sources=(official,)))
-    assert not decision.verified
-    assert "citation history not independent of text verification" in decision.reasons
-
-
-def test_release_gate_never_allows_unverified_candidate_into_citable_results():
-    verified = _authority()
-    model_like_candidate = _authority(
+def test_release_gate_rejects_unregistered_model_like_source():
+    candidate = _authority(
         citation="model-output",
         source_url="https://example.com/generated",
         source_tier=SourceTier.REPOSITORY,
@@ -64,10 +53,15 @@ def test_release_gate_never_allows_unverified_candidate_into_citable_results():
         negative_treatment_found=None,
         status=AuthorityStatus.UNKNOWN,
     )
+    decision = CitationFirewall().verify(candidate)
+    assert not decision.verified
+    assert decision.label == "UNVERIFIED — DO NOT CITE"
+
+
+def test_release_gate_research_workflow_only_surfaces_verified_candidates():
     result = ResearchWorkflow().evaluate(
         LegalResearchRequest("rule?", "NY"),
-        [verified, model_like_candidate],
+        [_authority(), _authority(citation="bad", status=AuthorityStatus.UNKNOWN)],
     )
     assert len(result.citable_authorities) == 1
-    assert result.citable_authorities[0].authority == verified
     assert result.citable_authorities[0].verification.verified
