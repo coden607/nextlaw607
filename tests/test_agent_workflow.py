@@ -1,4 +1,4 @@
-from dataclasses import replace
+from datetime import date
 
 from nextlaw607.agents import (
     AgentPhase,
@@ -6,8 +6,27 @@ from nextlaw607.agents import (
     AgentWorkflow,
     ToolPolicy,
 )
-from nextlaw607.authority import LegalAuthority
+from nextlaw607.authority import AuthorityStatus, LegalAuthority, SourceTier
 from nextlaw607.research import LegalResearchRequest
+
+
+def verified_authority() -> LegalAuthority:
+    return LegalAuthority(
+        citation="1 N.Y.3d 1",
+        title="People v Example",
+        court="NY Court of Appeals",
+        jurisdiction="NY",
+        decision_date=date(2024, 1, 1),
+        source_url="https://nycourts.gov/example",
+        source_tier=SourceTier.OFFICIAL,
+        holding="A verified holding.",
+        status=AuthorityStatus.GOOD_LAW,
+        last_verified_on=date.today(),
+        verification_sources=("https://nycourts.gov/example",),
+        citation_history_checked_on=date.today(),
+        negative_treatment_found=False,
+        history_sources=("https://www.courtlistener.com/opinion/123/example/",),
+    )
 
 
 def test_agent_state_is_typed_and_starts_unverified():
@@ -36,9 +55,9 @@ def test_workflow_requires_deterministic_legal_verification_before_answer():
         title="Fake v Case",
         court="Unknown",
         jurisdiction="NY",
-        decision_date=__import__("datetime").date(2026, 1, 1),
+        decision_date=date(2026, 1, 1),
         source_url="https://example.com/fake",
-        source_tier=__import__("nextlaw607.authority", fromlist=["SourceTier"]).SourceTier.SECONDARY,
+        source_tier=SourceTier.SECONDARY,
         holding="Unverified model-supplied text",
     )
     state = AgentState(
@@ -58,7 +77,7 @@ def test_workflow_requires_deterministic_legal_verification_before_answer():
 def test_model_or_tool_failure_cannot_skip_verification():
     state = AgentState(
         request=LegalResearchRequest(question="What law controls?", jurisdiction="NY"),
-        candidate_authorities=(),
+        candidate_authorities=(verified_authority(),),
     )
     workflow = AgentWorkflow(tool_policy=ToolPolicy(allowed_tools=frozenset({"retrieve_sources"})))
 
@@ -72,10 +91,10 @@ def test_model_or_tool_failure_cannot_skip_verification():
     assert result.failure is not None
 
 
-def test_verified_authority_is_the_only_path_to_answer(verified_good_law_authority):
+def test_verified_authority_is_the_only_path_to_answer():
     state = AgentState(
         request=LegalResearchRequest(question="What law controls?", jurisdiction="NY"),
-        candidate_authorities=(verified_good_law_authority,),
+        candidate_authorities=(verified_authority(),),
     )
     workflow = AgentWorkflow(tool_policy=ToolPolicy(allowed_tools=frozenset()))
 
