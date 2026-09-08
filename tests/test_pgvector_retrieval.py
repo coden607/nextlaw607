@@ -53,6 +53,23 @@ def test_pgvector_search_returns_untrusted_candidates_with_provenance():
     assert captured["headers"]["Authorization"].startswith("Bearer sb_secret_")
 
 
+def test_retrieved_chunk_trust_flags_cannot_be_overridden_by_callers():
+    common = dict(
+        chunk_id="chunk-1",
+        source_url="https://www.nycourts.gov/example",
+        jurisdiction="NY",
+        content="candidate",
+        content_sha256="a" * 64,
+        similarity=0.9,
+    )
+    with pytest.raises(TypeError):
+        RetrievedChunk(**common, authority_eligible=True)
+    with pytest.raises(TypeError):
+        RetrievedChunk(**common, verified_authority=True)
+    with pytest.raises(TypeError):
+        RetrievedChunk(**common, trusted=True)
+
+
 def test_pgvector_search_fails_closed_on_transport_status_or_shape_errors():
     cases = [
         lambda *_: (500, []),
