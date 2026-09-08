@@ -10,7 +10,6 @@ FROM node:22-alpine AS runtime
 
 ENV NODE_ENV=production
 ENV PORT=4173
-ENV NEXTLAW_API_ORIGIN=http://127.0.0.1:8000
 
 WORKDIR /app
 RUN addgroup -S nextlaw && adduser -S -G nextlaw nextlaw
