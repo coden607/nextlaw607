@@ -31,6 +31,7 @@ observability = [
 ]
 evaluation = [
   "ragas>=0.4.3,<0.5",
+  "langchain-community<0.4",
   "anthropic>=1.4,<2; python_version >= '3.10'",
 ]
 
