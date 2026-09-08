@@ -70,11 +70,13 @@
 - [ ] Add provider-backed test-project evidence for real Mem0 add/export/delete consistency before promoting the component from `implemented` to `verified`; re-query after deletion to prove erased records are no longer returned.
 
 ### Task 6: NeMo and tool guardrails
-**Files:** create guardrail configuration/adapters/tests.
+**Files:** `src/nextlaw607/guardrails.py`, `tests/test_guardrails.py`, `compat/test_guardrails_framework.py`, `pyproject.toml`, `.github/workflows/ci.yml`.
 
-- [ ] RED adversarial tests for prompt injection, unauthorized tool calls, PII leakage, and attempts to bypass CitationFirewall.
-- [ ] Integrate NeMo rails plus deterministic tool authorization (Arcade or equivalent).
-- [ ] Verify allowed flows continue and denied flows fail closed.
+- [x] RED adversarial tests for prompt injection, unauthorized tool calls, PII/secret leakage, and attempts to bypass CitationFirewall; CI confirmed the missing boundary as the cause of failure.
+- [x] Implement deterministic preflight/redaction plus explicit default-deny tool authorization; authority promotion is non-overridable and remains CitationFirewall-only.
+- [x] Add a deterministic-first `NemoGuardrailsAdapter`, optional `nemoguardrails>=0.24,<0.25` dependency, and dedicated real-package compatibility CI lane.
+- [x] Verify allowed deterministic flows continue and denied injection/tool/bypass flows fail closed in the core suite.
+- [ ] Before promoting NeMo from `implemented` to `verified`, add a controlled configured-rails smoke test that instantiates real NeMo rails without provider credentials and proves NextLaw deterministic gates still run first.
 
 ### Task 7: Observability/debugging
 **Files:** create telemetry configuration and privacy tests.
