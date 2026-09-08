@@ -49,7 +49,7 @@
 - [x] Implement concrete Docling and Crawl4AI runtime adapters with provenance/content hashing, bounded inputs, lazy dependency loading, and fail-closed runtime errors.
 - [x] Add an `ingestion` optional dependency group and dedicated CI compatibility lane that installs the real Docling/Crawl4AI packages and validates the adapter-facing APIs.
 - [x] Route candidate legal material through CitationFirewall; verify GREEN.
-- [ ] Add a controlled no-LLM live smoke fixture for real Docling conversion and Crawl4AI crawling before promoting either component from `implemented` to `verified`.
+- [x] Add a controlled no-LLM live smoke gate that performs real Docling conversion and Crawl4AI Chromium crawling through the production adapters; preserve untrusted/non-authority status and record exact CI evidence before promoting both components to `verified`.
 
 ### Task 4: Typed agent workflow
 **Files:** create `src/nextlaw607/agents/` and workflow tests.
