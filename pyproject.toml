@@ -13,6 +13,10 @@ agents = [
   "pydantic-ai>=1.0",
   "langgraph>=1.0",
 ]
+ingestion = [
+  "docling>=2.0",
+  "crawl4ai>=0.9,<1",
+]
 
 [tool.setuptools]
 package-dir = {"" = "src"}
