@@ -48,9 +48,7 @@ def test_release_gate_fails_closed_when_history_review_is_stale():
 
 def test_release_gate_fails_closed_when_history_provider_is_not_independent():
     official = "https://www.nycourts.gov/reporter/3dseries/2024/example.htm"
-    decision = CitationFirewall().verify(
-        _authority(history_sources=(official,))
-    )
+    decision = CitationFirewall().verify(_authority(history_sources=(official,)))
     assert not decision.verified
     assert "citation history not independent of text verification" in decision.reasons
 
@@ -70,4 +68,6 @@ def test_release_gate_never_allows_unverified_candidate_into_citable_results():
         LegalResearchRequest("rule?", "NY"),
         [verified, model_like_candidate],
     )
-    assert result.citable_authorities == (verified,)
+    assert len(result.citable_authorities) == 1
+    assert result.citable_authorities[0].authority == verified
+    assert result.citable_authorities[0].verification.verified
