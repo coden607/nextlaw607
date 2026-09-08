@@ -16,7 +16,7 @@ def test_production_readiness_fails_closed_until_every_required_component_is_ver
     assert result.ready is False
     assert "cloudflare" in result.blockers
     assert "mem0" in result.blockers
-    assert "citation-firewall" in result.blockers
+    assert "citation-firewall" not in result.blockers
     assert "docker" not in result.blockers
     assert "pgvector" not in result.blockers
 
