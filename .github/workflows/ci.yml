@@ -98,3 +98,11 @@ jobs:
       - run: python -m pip install --upgrade pip
       - run: pip install -e '.[evaluation]' pytest
       - run: pytest -q compat/test_evaluation_frameworks.py
+      - name: Write exact-revision evaluation evidence
+        run: |
+          printf '{"schema_version":1,"revision":"%s","deterministic_gate":"required","framework_compat":"passed"}\n' "$GITHUB_SHA" > evaluation-evidence.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: evaluation-evidence-${{ github.sha }}
+          path: evaluation-evidence.json
+          if-no-files-found: error
