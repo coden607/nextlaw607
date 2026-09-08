@@ -58,3 +58,24 @@ class ToolAuthorizer:
         if tool_name not in self._allowed_tools:
             return GuardrailDecision(False, "tool is not on the explicit allowlist")
         return GuardrailDecision(True, "tool allowed")
+
+
+class NemoGuardrailsAdapter:
+    """Optional NeMo runtime bridge behind NextLaw's deterministic gate.
+
+    NeMo can add programmable rails, but it never replaces deterministic input
+    checks, tool authorization, or CitationFirewall legal verification.
+    """
+
+    def __init__(self, *, gate: GuardrailGate | None = None) -> None:
+        self.gate = gate or GuardrailGate()
+
+    def preflight(self, text: str) -> GuardrailDecision:
+        return self.gate.inspect_input(text)
+
+    def runtime_status(self) -> GuardrailDecision:
+        try:
+            from nemoguardrails import RailsConfig  # noqa: F401
+        except Exception:
+            return GuardrailDecision(False, "NeMo Guardrails runtime unavailable")
+        return GuardrailDecision(True, "NeMo Guardrails runtime available")
