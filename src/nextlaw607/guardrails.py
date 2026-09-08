@@ -49,12 +49,16 @@ class GuardrailGate:
 class ToolAuthorizer:
     """Explicit allowlist with default deny and a non-overridable legal trust boundary."""
 
+    _TOOL_NAME_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}$")
+
     def __init__(self, *, allowed_tools: Iterable[str] = ()) -> None:
         self._allowed_tools = frozenset(str(tool).strip() for tool in allowed_tools if str(tool).strip())
 
     def authorize(self, tool_name: str, *, attempts_authority_promotion: bool = False) -> GuardrailDecision:
         if attempts_authority_promotion:
             return GuardrailDecision(False, "CitationFirewall cannot be overridden by tool authorization")
+        if not isinstance(tool_name, str) or not self._TOOL_NAME_PATTERN.fullmatch(tool_name):
+            return GuardrailDecision(False, "invalid tool identifier")
         if tool_name not in self._allowed_tools:
             return GuardrailDecision(False, "tool is not on the explicit allowlist")
         return GuardrailDecision(True, "tool allowed")
