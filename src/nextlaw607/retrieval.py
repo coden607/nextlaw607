@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 import math
 from collections.abc import Callable, Mapping, Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
@@ -55,9 +55,9 @@ class RetrievedChunk:
     content: str
     content_sha256: str
     similarity: float
-    trusted: bool = False
-    verified_authority: bool = False
-    authority_eligible: bool = False
+    trusted: bool = field(default=False, init=False)
+    verified_authority: bool = field(default=False, init=False)
+    authority_eligible: bool = field(default=False, init=False)
 
 
 class SupabasePgvectorRepository:
