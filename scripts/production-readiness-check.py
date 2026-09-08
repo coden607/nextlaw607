@@ -18,7 +18,7 @@ def main() -> int:
     result = assess_production_readiness(manifest)
     payload = {
         "schema_version": 1,
-        "revision": os.environ.get("GITHUB_SHA", "unknown"),
+        "revision": os.environ.get("NEXTLAW_EXACT_REVISION") or os.environ.get("GITHUB_SHA", "unknown"),
         "ready": result.ready,
         "blockers": list(result.blockers),
     }
