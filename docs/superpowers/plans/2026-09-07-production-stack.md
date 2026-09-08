@@ -63,9 +63,11 @@
 ### Task 5: Mem0 memory isolation
 **Files:** create memory adapter/config/tests.
 
-- [ ] RED tests for separate user/case/agent/session namespaces, consent, delete/export, and prohibition on treating memory as authority.
-- [ ] Implement Mem0 adapter with privacy redaction and explicit IDs.
-- [ ] Verify isolation/deletion and fail-closed behavior.
+- [x] RED tests for separate user/case/agent/session namespaces, consent, delete/export, privacy redaction, and prohibition on treating memory as authority.
+- [x] Implement a consent-first Mem0 adapter with explicit user/agent/run IDs, case metadata, exact-scope export/delete, local secret redaction, wildcard rejection, and `authority_eligible=false` hard-coded into the boundary.
+- [x] Add a `memory` optional dependency group and dedicated CI compatibility lane that installs the real `mem0ai` package and verifies the required MemoryClient operations without external API calls.
+- [x] Verify local isolation/deletion and fail-closed behavior in the deterministic suite.
+- [ ] Add provider-backed test-project evidence for real Mem0 add/export/delete consistency before promoting the component from `implemented` to `verified`; re-query after deletion to prove erased records are no longer returned.
 
 ### Task 6: NeMo and tool guardrails
 **Files:** create guardrail configuration/adapters/tests.
