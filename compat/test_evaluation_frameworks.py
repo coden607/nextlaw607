@@ -1,10 +1,10 @@
 def test_real_ragas_and_anthropic_packages_expose_required_interfaces():
     import anthropic
     import ragas
-    from ragas.metrics.collections import AspectCritic
+    from ragas.metrics import DiscreteMetric
 
     assert hasattr(ragas, "__version__")
-    assert callable(AspectCritic)
+    assert callable(DiscreteMetric)
     assert callable(anthropic.Anthropic)
 
 
