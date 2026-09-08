@@ -79,11 +79,13 @@
 - [ ] Before promoting NeMo from `implemented` to `verified`, add a controlled configured-rails smoke test that instantiates real NeMo rails without provider credentials and proves NextLaw deterministic gates still run first.
 
 ### Task 7: Observability/debugging
-**Files:** create telemetry configuration and privacy tests.
+**Files:** `src/nextlaw607/telemetry.py`, `tests/test_telemetry_privacy.py`, `tests/test_telemetry_adapters.py`, `compat/test_observability_frameworks.py`, `pyproject.toml`, `.github/workflows/ci.yml`, `.env.example`.
 
-- [ ] RED tests that secrets/tokens/legal private content are redacted from telemetry.
-- [ ] Wire OpenTelemetry spans, Langfuse LLM/agent traces/evals, and Sentry exceptions/performance.
-- [ ] Verify trace correlation without sensitive payload leakage.
+- [x] RED tests proving secrets/tokens, prompts, case-private content, authority/legal-source text, email/SSN-like PII, and sink failures cannot leak or alter legal workflow behavior; CI confirmed the missing telemetry boundary as the intended failure.
+- [x] Implement `PrivacySafeTelemetry` with recursive deterministic redaction before any sink sees data, correlation IDs for safe trace joining, and fail-open sink behavior so telemetry outages cannot break legal work.
+- [x] Wire lazy OpenTelemetry, Langfuse, and Sentry sink adapters plus an `observability` optional dependency group; keep vendor SDKs out of startup paths unless explicitly enabled.
+- [x] Add a dedicated real-package compatibility lane that installs Langfuse/OpenTelemetry/Sentry, records an in-memory OpenTelemetry span, exercises Langfuse with tracing disabled, and exercises Sentry with no DSN/zero sampling; verify correlation without raw sensitive payload leakage.
+- [ ] Before promoting Langfuse/OpenTelemetry/Sentry from `implemented` to `verified`, add a controlled external-export smoke environment that proves sanitized payloads are the only data received by configured telemetry backends and that production secrets remain server-only.
 
 ### Task 8: Evaluation lane
 **Files:** extend `evals/`, CI workflow and release validator.
