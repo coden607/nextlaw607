@@ -30,10 +30,12 @@ jobs:
       - run: python -m pip install --upgrade pip
       - run: pip install -e .
       - name: Write exact-revision readiness report
+        env:
+          NEXTLAW_EXACT_REVISION: ${{ github.event.pull_request.head.sha || github.sha }}
         run: python scripts/production-readiness-check.py > production-readiness.json
       - uses: actions/upload-artifact@v4
         with:
-          name: production-readiness-${{ github.sha }}
+          name: production-readiness-${{ github.event.pull_request.head.sha || github.sha }}
           path: production-readiness.json
           if-no-files-found: error
 
