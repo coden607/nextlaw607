@@ -53,7 +53,8 @@
 **Files:** create `src/nextlaw607/agents/` and workflow tests.
 
 - [x] RED tests for typed state, deterministic legal verification node, tool allowlisting, and fail-closed transitions.
-- [ ] Add concrete Pydantic AI agent boundary and LangGraph state machine. The deterministic typed orchestration core is implemented and verified; framework bindings remain pending.
+- [x] Add concrete Pydantic AI agent boundary and LangGraph state machine adapters behind the deterministic `AgentWorkflow`; missing/invalid framework runtimes fail closed and cannot bypass CitationFirewall.
+- [ ] Run a dedicated compatibility job with the real Pydantic AI and LangGraph optional dependencies installed before promoting these components from `implemented` to `verified`.
 - [ ] Keep Archon as development/harness integration, not per-request legal authority.
 - [x] Verify model/tool failures never bypass legal verification in the deterministic orchestration core.
 
