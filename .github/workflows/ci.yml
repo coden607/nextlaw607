@@ -20,6 +20,34 @@ jobs:
       - run: npm --prefix apps/web install --no-audit --no-fund
       - run: ./scripts/verify.sh
 
+  docker-runtime-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build exact-revision image
+        run: docker build --pull -t "nextlaw607:${GITHUB_SHA}" .
+      - name: Run non-root container and probe static runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker run -d --name nextlaw607-smoke \
+            -p 127.0.0.1:4173:4173 \
+            -e NEXTLAW_API_ORIGIN=https://api.example.invalid \
+            "nextlaw607:${GITHUB_SHA}"
+          trap 'docker logs nextlaw607-smoke || true; docker rm -f nextlaw607-smoke >/dev/null 2>&1 || true' EXIT
+          test "$(docker inspect -f '{{.Config.User}}' nextlaw607-smoke)" = "nextlaw"
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent --show-error http://127.0.0.1:4173/index.html >/tmp/nextlaw-index.html; then
+              break
+            fi
+            sleep 1
+          done
+          curl --fail --silent --show-error http://127.0.0.1:4173/manifest.webmanifest >/tmp/nextlaw-manifest.webmanifest
+          grep -q 'NextLaw' /tmp/nextlaw-index.html
+          health="$(docker inspect -f '{{if .State.Health}}{{.State.Health.Status}}{{else}}missing{{end}}' nextlaw607-smoke)"
+          test "$health" != "unhealthy"
+
   cloudflare-deploy-compat:
     runs-on: ubuntu-latest
     steps:
