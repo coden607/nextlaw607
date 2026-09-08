@@ -1,6 +1,11 @@
 from __future__ import annotations
 
-from nextlaw607.memory import MemoryScope, MemoryVault, memory_can_verify_authority
+from nextlaw607.memory import (
+    Mem0MemoryAdapter,
+    MemoryScope,
+    MemoryVault,
+    memory_can_verify_authority,
+)
 
 
 def test_memory_requires_explicit_consent_before_persisting():
@@ -66,3 +71,62 @@ def test_memory_can_never_become_legal_authority():
 
     assert record.authority_eligible is False
     assert memory_can_verify_authority(record) is False
+
+
+class FakeMem0Backend:
+    def __init__(self):
+        self.add_calls = []
+        self.get_all_calls = []
+        self.delete_calls = []
+        self.items = []
+
+    def add(self, messages, **kwargs):
+        self.add_calls.append((messages, kwargs))
+        self.items.append({"id": "m1", "memory": messages[0]["content"], "metadata": kwargs["metadata"]})
+        return {"results": [{"id": "m1"}]}
+
+    def get_all(self, **kwargs):
+        self.get_all_calls.append(kwargs)
+        return {"results": list(self.items)}
+
+    def delete(self, memory_id):
+        self.delete_calls.append(memory_id)
+        self.items = [item for item in self.items if item["id"] != memory_id]
+        return {"message": "deleted"}
+
+
+def test_mem0_adapter_uses_explicit_scope_ids_and_metadata():
+    backend = FakeMem0Backend()
+    adapter = Mem0MemoryAdapter(backend)
+    scope = MemoryScope("user-1", "case-a", "research", "session-1")
+
+    adapter.remember("remember this", scope=scope, consent=True)
+
+    _, kwargs = backend.add_calls[0]
+    assert kwargs["user_id"] == "user-1"
+    assert kwargs["agent_id"] == "research"
+    assert kwargs["run_id"] == "session-1"
+    assert kwargs["metadata"]["case_id"] == "case-a"
+    assert kwargs["metadata"]["authority_eligible"] is False
+
+
+def test_mem0_export_filters_exact_scope_and_delete_uses_ids_not_wildcards():
+    backend = FakeMem0Backend()
+    adapter = Mem0MemoryAdapter(backend)
+    scope = MemoryScope("user-1", "case-a", "research", "session-1")
+    adapter.remember("remember this", scope=scope, consent=True)
+
+    exported = adapter.export(scope)
+    deleted = adapter.delete(scope)
+
+    assert [item.content for item in exported] == ["remember this"]
+    assert backend.get_all_calls[-1]["filters"] == {
+        "AND": [
+            {"user_id": "user-1"},
+            {"agent_id": "research"},
+            {"run_id": "session-1"},
+            {"metadata.case_id": "case-a"},
+        ]
+    }
+    assert deleted == 1
+    assert backend.delete_calls == ["m1"]
