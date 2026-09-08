@@ -17,6 +17,9 @@ ingestion = [
   "docling>=2.0",
   "crawl4ai>=0.9,<1",
 ]
+memory = [
+  "mem0ai>=2.0,<3; python_version >= '3.10'",
+]
 
 [tool.setuptools]
 package-dir = {"" = "src"}
