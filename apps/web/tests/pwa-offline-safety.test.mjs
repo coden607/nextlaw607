@@ -23,6 +23,7 @@ async function loadWorker({ fetchImpl, cacheMatch, cachePut }) {
       match: cacheMatch,
     },
     Promise,
+    URL,
   });
   vm.runInContext(source, context, { filename: "sw.js" });
   return listeners;
