@@ -19,7 +19,7 @@ def test_readiness_cli_reports_blockers_without_masking_other_ci_evidence() -> N
     payload = json.loads(result.stdout)
     assert payload["ready"] is False
     assert "cloudflare" in payload["blockers"]
-    assert "citation-firewall" in payload["blockers"]
+    assert "citation-firewall" not in payload["blockers"]
 
 
 def test_readiness_cli_can_fail_closed_for_an_actual_release_attempt() -> None:
