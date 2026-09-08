@@ -58,6 +58,14 @@ def redact_telemetry_value(value: Any, *, key: str | None = None) -> Any:
     return _redact_string(str(value))
 
 
+def _span_value(value: Any) -> bool | int | float | str:
+    if isinstance(value, (bool, int, float, str)):
+        return value
+    if value is None:
+        return "null"
+    return repr(value)
+
+
 @dataclass(frozen=True)
 class TelemetryEvent:
     name: str
@@ -98,3 +106,51 @@ class PrivacySafeTelemetry:
             except Exception:
                 self.sink_failures += 1
         return event
+
+
+class OpenTelemetrySink:
+    def __init__(self, *, tracer: Any | None = None, tracer_name: str = "nextlaw607") -> None:
+        if tracer is None:
+            from opentelemetry import trace
+
+            tracer = trace.get_tracer(tracer_name)
+        self._tracer = tracer
+
+    def __call__(self, event: TelemetryEvent) -> None:
+        with self._tracer.start_as_current_span(event.name) as span:
+            span.set_attribute("nextlaw.correlation_id", event.correlation_id)
+            for key, value in event.attributes.items():
+                span.set_attribute(f"nextlaw.{key}", _span_value(value))
+
+
+class LangfuseSink:
+    def __init__(self, *, client: Any | None = None) -> None:
+        if client is None:
+            from langfuse import get_client
+
+            client = get_client()
+        self._client = client
+
+    def __call__(self, event: TelemetryEvent) -> None:
+        metadata = {"nextlaw.correlation_id": event.correlation_id}
+        metadata.update({f"nextlaw.{key}": value for key, value in event.attributes.items()})
+        with self._client.start_as_current_observation(
+            as_type="span",
+            name=event.name,
+        ) as observation:
+            observation.update(metadata=metadata)
+
+
+class SentrySink:
+    def __init__(self, *, sentry: Any | None = None) -> None:
+        if sentry is None:
+            import sentry_sdk
+
+            sentry = sentry_sdk
+        self._sentry = sentry
+
+    def __call__(self, event: TelemetryEvent) -> None:
+        with self._sentry.start_span(op="nextlaw607.telemetry", name=event.name) as span:
+            span.set_data("nextlaw.correlation_id", event.correlation_id)
+            for key, value in event.attributes.items():
+                span.set_data(f"nextlaw.{key}", value)
