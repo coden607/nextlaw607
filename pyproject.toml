@@ -20,6 +20,9 @@ ingestion = [
 memory = [
   "mem0ai>=2.0,<3; python_version >= '3.10'",
 ]
+guardrails = [
+  "nemoguardrails>=0.24,<0.25; python_version >= '3.10'",
+]
 
 [tool.setuptools]
 package-dir = {"" = "src"}
