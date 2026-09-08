@@ -20,6 +20,23 @@ jobs:
       - run: npm --prefix apps/web install --no-audit --no-fund
       - run: ./scripts/verify.sh
 
+  production-readiness-report:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install --upgrade pip
+      - run: pip install -e .
+      - name: Write exact-revision readiness report
+        run: python scripts/production-readiness-check.py > production-readiness.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: production-readiness-${{ github.sha }}
+          path: production-readiness.json
+          if-no-files-found: error
+
   docker-runtime-smoke:
     runs-on: ubuntu-latest
     timeout-minutes: 10
