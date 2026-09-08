@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass, field
+from typing import Any, Iterable, Sequence
 
 
 @dataclass(frozen=True)
@@ -39,6 +41,102 @@ class EvaluationDecision:
     passed: bool
     label: str
     reasons: tuple[str, ...] = field(default_factory=tuple)
+
+
+class RagasAdapter:
+    """Thin adapter around Ragas metrics; scores quality but never legal authority."""
+
+    def __init__(self, *, faithfulness_metric: Any, context_precision_metric: Any) -> None:
+        self.faithfulness_metric = faithfulness_metric
+        self.context_precision_metric = context_precision_metric
+
+    async def evaluate(
+        self,
+        *,
+        user_input: str,
+        response: str,
+        retrieved_contexts: Sequence[str],
+        reference: str | None = None,
+    ) -> RagasScores:
+        if not user_input.strip() or not response.strip() or not retrieved_contexts:
+            raise ValueError("evaluation inputs must be non-empty")
+
+        common = {
+            "user_input": user_input,
+            "response": response,
+            "retrieved_contexts": list(retrieved_contexts),
+        }
+        faithfulness_result = await self.faithfulness_metric.ascore(**common)
+
+        precision_input = dict(common)
+        if reference is not None:
+            precision_input["reference"] = reference
+        context_precision_result = await self.context_precision_metric.ascore(**precision_input)
+
+        return RagasScores(
+            faithfulness=float(faithfulness_result.value),
+            context_precision=float(context_precision_result.value),
+        )
+
+
+class ClaudeEvaluator:
+    """Independent supplementary judge. It cannot confer legal-source authority."""
+
+    def __init__(self, *, client: Any, model: str) -> None:
+        if not model.strip():
+            raise ValueError("model is required")
+        self.client = client
+        self.model = model
+
+    def evaluate(
+        self,
+        *,
+        question: str,
+        answer: str,
+        verified_context: Iterable[str],
+    ) -> ClaudeJudgeResult:
+        context = tuple(item for item in verified_context if item and item.strip())
+        if not question.strip() or not answer.strip() or not context:
+            return ClaudeJudgeResult(False, 0.0, ("missing verified evaluation input",))
+
+        payload = {
+            "question": question,
+            "answer": answer,
+            "verified_context": context,
+        }
+        system = (
+            "You are an independent legal-answer quality evaluator. Judge only grounding, "
+            "scope discipline, and consistency with the supplied already-verified context. "
+            "You cannot declare any source good law, verified, authoritative, or citation-safe. "
+            "Return strict JSON only with keys passed (boolean), score (0..1), and reasons (array of strings)."
+        )
+        try:
+            response = self.client.messages.create(
+                model=self.model,
+                max_tokens=512,
+                system=system,
+                messages=[{"role": "user", "content": json.dumps(payload, sort_keys=True)}],
+            )
+            text = "".join(
+                block.text
+                for block in getattr(response, "content", ())
+                if getattr(block, "type", None) == "text" and isinstance(getattr(block, "text", None), str)
+            )
+            parsed = json.loads(text)
+            if not isinstance(parsed, dict):
+                raise ValueError("judge output must be an object")
+            passed = parsed.get("passed")
+            score = parsed.get("score")
+            reasons = parsed.get("reasons", [])
+            if not isinstance(passed, bool):
+                raise ValueError("passed must be boolean")
+            if not isinstance(score, (int, float)) or isinstance(score, bool):
+                raise ValueError("score must be numeric")
+            if not isinstance(reasons, list) or not all(isinstance(item, str) for item in reasons):
+                raise ValueError("reasons must be strings")
+            return ClaudeJudgeResult(passed, float(score), tuple(reasons))
+        except Exception:
+            return ClaudeJudgeResult(False, 0.0, ("malformed or unavailable independent judge output",))
 
 
 def combine_evaluation(
