@@ -20,6 +20,20 @@ jobs:
       - run: npm --prefix apps/web install --no-audit --no-fund
       - run: ./scripts/verify.sh
 
+  cloudflare-deploy-compat:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm --prefix apps/web install --no-audit --no-fund
+      - run: npm --prefix apps/web run build
+      - name: Wrangler exact-revision dry run
+        run: npx --yes wrangler@4.68.0 deploy --dry-run --outdir .wrangler-dry-run
+      - name: Assert deploy bundle exists
+        run: test -n "$(find .wrangler-dry-run -type f -maxdepth 2 -print -quit)"
+
   agent-framework-compat:
     runs-on: ubuntu-latest
     steps:
