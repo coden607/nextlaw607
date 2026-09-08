@@ -46,8 +46,10 @@
 **Files:** create `src/nextlaw607/ingestion/` adapters and tests.
 
 - [x] RED tests: Docling/Crawl4AI outputs are untrusted candidates and cannot become verified authorities directly.
-- [ ] Implement concrete Docling and Crawl4AI runtime adapters with provenance/content hashing and bounded inputs. The shared candidate boundary is implemented; external library bindings remain pending.
+- [x] Implement concrete Docling and Crawl4AI runtime adapters with provenance/content hashing, bounded inputs, lazy dependency loading, and fail-closed runtime errors.
+- [x] Add an `ingestion` optional dependency group and dedicated CI compatibility lane that installs the real Docling/Crawl4AI packages and validates the adapter-facing APIs.
 - [x] Route candidate legal material through CitationFirewall; verify GREEN.
+- [ ] Add a controlled no-LLM live smoke fixture for real Docling conversion and Crawl4AI crawling before promoting either component from `implemented` to `verified`.
 
 ### Task 4: Typed agent workflow
 **Files:** create `src/nextlaw607/agents/` and workflow tests.
