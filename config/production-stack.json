@@ -34,7 +34,7 @@
     "n8n": {"status":"planned","implementation":[],"tests":[],"evidence":[],"environment":[]},
     "docling": {"status":"verified","implementation":["src/nextlaw607/ingestion/__init__.py","src/nextlaw607/ingestion/adapters.py","pyproject.toml"],"tests":["tests/test_ingestion_boundary.py","tests/test_ingestion_adapters.py","compat/test_ingestion_frameworks.py","compat/test_ingestion_live_smoke.py"],"evidence":[".github/workflows/ci.yml#ingestion-framework-compat",".github/workflows/ci.yml#ingestion-live-smoke"],"environment":[]},
     "crawl4ai": {"status":"verified","implementation":["src/nextlaw607/ingestion/__init__.py","src/nextlaw607/ingestion/adapters.py","pyproject.toml"],"tests":["tests/test_ingestion_boundary.py","tests/test_ingestion_adapters.py","compat/test_ingestion_frameworks.py","compat/test_ingestion_live_smoke.py"],"evidence":[".github/workflows/ci.yml#ingestion-framework-compat",".github/workflows/ci.yml#ingestion-live-smoke"],"environment":[]},
-    "mem0": {"status":"planned","implementation":[],"tests":[],"evidence":[],"environment":[]},
+    "mem0": {"status":"implemented","implementation":["src/nextlaw607/memory.py","pyproject.toml"],"tests":["tests/test_memory_isolation.py","compat/test_memory_framework.py"],"evidence":[".github/workflows/ci.yml#memory-framework-compat"],"environment":[]},
     "nemo-guardrails": {"status":"planned","implementation":[],"tests":[],"evidence":[],"environment":[]},
     "tool-authorization": {"status":"planned","implementation":[],"tests":[],"evidence":[],"environment":[]},
     "langfuse": {"status":"planned","implementation":[],"tests":[],"evidence":[],"environment":[]},
