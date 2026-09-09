@@ -79,9 +79,10 @@ TelemetrySink = Callable[[TelemetryEvent], None]
 class PrivacySafeTelemetry:
     """Fail-open observability with fail-closed payload privacy.
 
-    Telemetry failures must never alter legal workflow behavior. All data is
-    sanitized before any sink sees it, and only the correlation identifier is
-    retained verbatim so traces can be joined without copying private content.
+    Telemetry failures must never alter legal workflow behavior. All data,
+    including correlation identifiers, is sanitized before any sink sees it.
+    Correlation identifiers remain useful for joining traces when they are
+    opaque IDs, but accidental PII or credentials are never retained verbatim.
     """
 
     def __init__(self, sinks: Sequence[TelemetrySink] = ()) -> None:
@@ -97,7 +98,7 @@ class PrivacySafeTelemetry:
     ) -> TelemetryEvent:
         event = TelemetryEvent(
             name=_redact_string(str(name)),
-            correlation_id=str(correlation_id),
+            correlation_id=_redact_string(str(correlation_id)),
             attributes=redact_telemetry_value(dict(attributes or {})),
         )
         for sink in self._sinks:
