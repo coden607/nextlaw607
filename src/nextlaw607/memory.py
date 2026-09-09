@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import hashlib
+import json
 import re
 from dataclasses import dataclass
 from typing import Any
@@ -47,6 +49,16 @@ class MemoryRecord:
     authority_eligible: bool = False
 
 
+def _scope_fingerprint(scope: MemoryScope) -> str:
+    """Return a deterministic opaque attestation for the complete NextLaw memory scope."""
+    canonical = json.dumps(
+        [scope.user_id, scope.case_id, scope.agent_id, scope.session_id],
+        ensure_ascii=False,
+        separators=(",", ":"),
+    ).encode("utf-8")
+    return hashlib.sha256(canonical).hexdigest()
+
+
 class MemoryVault:
     """Deterministic in-process memory boundary used by tests and local fallback.
 
@@ -87,6 +99,10 @@ class Mem0MemoryAdapter:
     network calls. It is compatible with Mem0 clients exposing add/get_all/delete.
     Bulk wildcard deletion is deliberately not used; exact records are enumerated
     and deleted by memory id.
+
+    Provider-side filtering is treated as defense-in-depth rather than authority:
+    every accepted provider record must carry the opaque NextLaw scope fingerprint
+    written at creation time. A missing or mismatched attestation fails closed.
     """
 
     def __init__(self, backend: Any) -> None:
@@ -118,6 +134,7 @@ class Mem0MemoryAdapter:
                 "case_id": scope.case_id,
                 "authority_eligible": False,
                 "nextlaw_scope_version": 1,
+                "nextlaw_scope_fingerprint": _scope_fingerprint(scope),
             },
         )
         memory_id = self._extract_created_id(result) or uuid4().hex
@@ -127,11 +144,18 @@ class Mem0MemoryAdapter:
         payload = self._backend.get_all(filters=self._filters(scope))
         results = payload.get("results", []) if isinstance(payload, dict) else []
         records: list[MemoryRecord] = []
+        expected_fingerprint = _scope_fingerprint(scope)
         for item in results:
             if not isinstance(item, dict):
                 continue
             metadata = item.get("metadata") if isinstance(item.get("metadata"), dict) else {}
             if metadata.get("case_id") != scope.case_id:
+                continue
+            if metadata.get("nextlaw_scope_version") != 1:
+                continue
+            if metadata.get("nextlaw_scope_fingerprint") != expected_fingerprint:
+                continue
+            if metadata.get("authority_eligible") is not False:
                 continue
             memory_id = item.get("id")
             content = item.get("memory", item.get("text", ""))
