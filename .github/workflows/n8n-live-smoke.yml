@@ -44,15 +44,40 @@ jobs:
               -e N8N_PORT=5678 \
               -v "$data_dir:/home/node/.n8n" \
               "docker.n8n.io/n8nio/n8n:${N8N_VERSION}" >/dev/null
-            ready=false
+
+            health_ready=false
             for attempt in $(seq 1 60); do
               if curl --fail --silent --show-error http://127.0.0.1:5678/healthz >/dev/null 2>&1; then
-                ready=true
+                health_ready=true
                 break
               fi
               sleep 1
             done
-            test "$ready" = true
+            test "$health_ready" = true
+
+            rest_ready=false
+            for attempt in $(seq 1 60); do
+              settings_status="$(curl --silent --show-error \
+                -o /tmp/nextlaw607-n8n-settings.json \
+                -w '%{http_code}' \
+                http://127.0.0.1:5678/rest/settings || true)"
+              if test "$settings_status" = "200" && python3 - <<'PY'
+          import json
+          from pathlib import Path
+          try:
+              payload = json.loads(Path('/tmp/nextlaw607-n8n-settings.json').read_text(encoding='utf-8'))
+              valid = isinstance(payload.get('data', {}).get('userManagement', {}), dict)
+          except Exception:
+              valid = False
+          raise SystemExit(0 if valid else 1)
+          PY
+              then
+                rest_ready=true
+                break
+              fi
+              sleep 1
+            done
+            test "$rest_ready" = true
           }
 
           stop_n8n() {
@@ -78,14 +103,15 @@ jobs:
             -H 'content-type: application/json' \
             --data "$setup_payload" \
             http://127.0.0.1:5678/rest/owner/setup)"
+          echo "n8n owner setup HTTP status: $setup_status"
           test "$setup_status" = "200"
 
-          owner_id="$(python3 - "$data_dir/database.sqlite" <<'PY'
+          owner_id="$(python3 - "$data_dir/database.sqlite" "$owner_email" <<'PY'
           import sqlite3, sys
           db = sqlite3.connect(sys.argv[1])
-          row = db.execute('SELECT id FROM user LIMIT 1').fetchone()
+          row = db.execute('SELECT id FROM user WHERE email = ?', (sys.argv[2],)).fetchone()
           if not row:
-              raise SystemExit('owner user was not persisted')
+              raise SystemExit('configured owner user was not persisted')
           print(row[0])
           PY
           )"
@@ -117,6 +143,7 @@ jobs:
             -H 'content-type: application/json' \
             --data "$login_payload" \
             http://127.0.0.1:5678/rest/login)"
+          echo "n8n login HTTP status: $login_status"
           test "$login_status" = "200"
 
           version_id="$(python3 - "$data_dir/database.sqlite" "$workflow_id" <<'PY'
@@ -238,4 +265,5 @@ jobs:
             /tmp/nextlaw607-n8n-activation.json
             /tmp/nextlaw607-n8n-webhooks.txt
             /tmp/nextlaw607-n8n-publication-state.txt
+            /tmp/nextlaw607-n8n-settings.json
           if-no-files-found: warn
