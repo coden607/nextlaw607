@@ -1,0 +1,49 @@
+name: Sentry live smoke
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+env:
+  SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+
+jobs:
+  live-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Sentry live smoke through production telemetry adapter
+        shell: bash
+        run: |
+          set -eu
+          if [ -z "${SENTRY_DSN:-}" ]; then
+            echo "Sentry provider credentials are not configured; live verification remains blocked."
+            exit 0
+          fi
+          python -m pip install --upgrade pip
+          pip install -e '.[observability]'
+          python - <<'PY'
+          import sentry_sdk
+          from nextlaw607.telemetry import PrivacySafeTelemetry, SentrySink
+
+          sentry_sdk.init(dsn=None)
+          # Re-init using environment DSN without printing it.
+          import os
+          sentry_sdk.init(dsn=os.environ["SENTRY_DSN"], traces_sample_rate=1.0)
+          telemetry = PrivacySafeTelemetry([SentrySink(sentry=sentry_sdk)])
+          event = telemetry.emit(
+              name="nextlaw.live_smoke",
+              correlation_id="ci-sentry-live-smoke",
+              attributes={"provider": "sentry", "authority_eligible": False},
+          )
+          assert event.attributes["authority_eligible"] is False
+          assert telemetry.sink_failures == 0
+          sentry_sdk.flush(timeout=5)
+          PY
