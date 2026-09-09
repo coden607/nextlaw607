@@ -1,0 +1,49 @@
+name: Ragas and Claude live evaluation
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  evaluation-live-export:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      ANTHROPIC_EVAL_MODEL: ${{ vars.ANTHROPIC_EVAL_MODEL }}
+      NEXTLAW_EXACT_REVISION: ${{ github.sha }}
+      RAGAS_DO_NOT_TRACK: "true"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Validate protected provider configuration
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$ANTHROPIC_API_KEY"
+          test -n "$ANTHROPIC_EVAL_MODEL"
+          test "$(git rev-parse HEAD)" = "$NEXTLAW_EXACT_REVISION"
+
+      - name: Install exact evaluation runtime
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e '.[evaluation]' pytest
+
+      - name: Run provider-backed Ragas and independent Claude verification
+        run: pytest -q compat/test_evaluation_live_smoke.py
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: evaluation-live-evidence-${{ github.sha }}
+          path: evaluation-live-evidence.json
+          if-no-files-found: warn
