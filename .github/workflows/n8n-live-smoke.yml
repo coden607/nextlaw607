@@ -9,7 +9,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
-      N8N_VERSION: 2.38.4
+      N8N_VERSION: 2.37.11
     steps:
       - uses: actions/checkout@v4
         with:
