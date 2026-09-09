@@ -1,7 +1,6 @@
 name: Mem0 live smoke
 on:
-  push:
-  pull_request:
+  workflow_dispatch:
 permissions:
   contents: read
 jobs:
@@ -10,12 +9,12 @@ jobs:
     timeout-minutes: 15
     env:
       MEM0_API_KEY: ${{ secrets.MEM0_API_KEY }}
-      NEXTLAW_EXACT_REVISION: ${{ github.event.pull_request.head.sha || github.sha }}
+      NEXTLAW_EXACT_REVISION: ${{ github.sha }}
       NEXTLAW_MEM0_TEST_SCOPE: nextlaw607-ci
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          ref: ${{ github.sha }}
           persist-credentials: false
       - uses: actions/setup-python@v5
         with:
@@ -30,6 +29,6 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: mem0-live-evidence-${{ github.event.pull_request.head.sha || github.sha }}
+          name: mem0-live-evidence-${{ github.sha }}
           path: mem0-live-evidence.json
           if-no-files-found: warn
