@@ -4,7 +4,7 @@ import { chromium } from "playwright";
 import AxeBuilder from "@axe-core/playwright";
 
 const baseURL = process.env.NEXTLAW_BROWSER_URL || "http://127.0.0.1:4173/";
-const revision = process.env.GITHUB_SHA || process.env.NEXTLAW_REVISION;
+const revision = process.env.NEXTLAW_REVISION || process.env.GITHUB_SHA;
 if (!revision) throw new Error("browser evidence requires an exact revision");
 
 const browser = await chromium.launch({ headless: true });
