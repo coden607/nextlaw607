@@ -1,0 +1,66 @@
+name: Protected provider verification sweep
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - feat/2026-production-stack
+
+permissions:
+  contents: read
+  actions: write
+
+jobs:
+  dispatch-provider-gates:
+    if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[provider-sweep]')
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      GH_TOKEN: ${{ github.token }}
+      TARGET_REF: feat/2026-production-stack
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+
+      - name: Dispatch Mem0 provider gate
+        run: gh workflow run mem0-live-smoke.yml --repo "$GITHUB_REPOSITORY" --ref "$TARGET_REF"
+
+      - name: Dispatch Langfuse provider gate
+        run: gh workflow run langfuse-live-export.yml --repo "$GITHUB_REPOSITORY" --ref "$TARGET_REF"
+
+      - name: Dispatch Sentry provider gate
+        run: gh workflow run sentry-live-export.yml --repo "$GITHUB_REPOSITORY" --ref "$TARGET_REF"
+
+      - name: Dispatch Ragas and Claude provider gate
+        run: gh workflow run evaluation-live-smoke.yml --repo "$GITHUB_REPOSITORY" --ref "$TARGET_REF"
+
+      - name: Record sweep dispatch evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json, os
+          from pathlib import Path
+          evidence = {
+              "schema_version": 1,
+              "revision": os.environ["GITHUB_SHA"],
+              "target_ref": os.environ["TARGET_REF"],
+              "dispatched": [
+                  "mem0-live-smoke.yml",
+                  "langfuse-live-export.yml",
+                  "sentry-live-export.yml",
+                  "evaluation-live-smoke.yml",
+              ],
+              "cloudflare_live_deploy_dispatched": False,
+              "cloudflare_block_reason": "Production API origin must be verified before live deployment.",
+          }
+          Path("provider-sweep-dispatch.json").write_text(json.dumps(evidence, indent=2) + "\n")
+          PY
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: provider-sweep-dispatch-${{ github.sha }}
+          path: provider-sweep-dispatch.json
+          if-no-files-found: error
