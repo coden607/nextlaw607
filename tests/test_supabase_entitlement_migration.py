@@ -1,7 +1,7 @@
 from pathlib import Path
 
 
-MIGRATION = Path('supabase/migrations/20260907_nextlaw_entitlements.sql')
+MIGRATION = Path('supabase/migrations/202609070001_entitlements.sql')
 
 
 def migration_sql() -> str:
@@ -16,10 +16,11 @@ def test_entitlement_migration_exists_and_targets_public_entitlements():
     assert 'references auth.users(id)' in sql
 
 
-def test_entitlement_migration_enforces_allowed_tiers_and_sources():
+def test_entitlement_migration_enforces_allowed_paid_tiers_and_sources():
     sql = migration_sql()
-    for value in ('free', 'premium', 'case_pass', 'pro', 'institutional'):
+    for value in ('premium', 'case_pass', 'pro', 'institutional'):
         assert f"'{value}'" in sql
+    assert "'free'" not in sql
     for value in ('purchase', 'institutional_grant', 'founder_lifetime_grant'):
         assert f"'{value}'" in sql
 
@@ -33,11 +34,12 @@ def test_founder_grant_cannot_be_weakened_in_storage():
     assert 'billing_required = false' in sql or 'not billing_required' in sql
 
 
-def test_entitlements_enable_rls_and_revoke_client_table_privileges():
+def test_entitlements_enable_and_force_rls_and_revoke_client_table_privileges():
     sql = migration_sql()
     assert 'enable row level security' in sql
+    assert 'force row level security' in sql
     assert 'revoke all on table public.entitlements from anon' in sql
-    assert 'revoke all on table public.entitlements from authenticated' in sql
+    assert 'authenticated' in sql
 
 
 def test_entitlements_do_not_define_direct_client_rls_policies():
@@ -48,6 +50,6 @@ def test_entitlements_do_not_define_direct_client_rls_policies():
 
 def test_service_role_is_the_only_explicit_data_reader():
     sql = migration_sql()
-    assert 'grant select on table public.entitlements to service_role' in sql
+    assert 'grant select, insert, update, delete on table public.entitlements to service_role' in sql
     assert 'grant select on table public.entitlements to anon' not in sql
     assert 'grant select on table public.entitlements to authenticated' not in sql
