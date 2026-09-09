@@ -10,6 +10,8 @@ jobs:
     timeout-minutes: 15
     env:
       N8N_VERSION: 2.38.4
+      N8N_WEBHOOK_ID: 9e2322f8-7aed-4ad8-8d50-1dd620d52c0a
+      N8N_WEBHOOK_PATH: nextlaw607-release-smoke
     steps:
       - uses: actions/checkout@v4
         with:
@@ -77,13 +79,15 @@ jobs:
           done
           test "$ready" = true
 
+          production_route="/webhook/${N8N_WEBHOOK_ID}/${N8N_WEBHOOK_PATH}"
           http_status="$(curl --silent --show-error \
             -o /tmp/nextlaw607-n8n-response.json \
             -w '%{http_code}' \
             -X POST \
             -H 'content-type: application/json' \
             --data '{"probe":"nextlaw607-release-smoke"}' \
-            http://127.0.0.1:5678/webhook/nextlaw607-release-smoke)"
+            "http://127.0.0.1:5678${production_route}")"
+          echo "n8n webhook route: $production_route"
           echo "n8n webhook HTTP status: $http_status"
           cat /tmp/nextlaw607-n8n-response.json || true
           test "$http_status" = "200"
