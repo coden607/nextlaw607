@@ -51,14 +51,14 @@ jobs:
           npx --yes wrangler@4.68.0 deployments list --json > /tmp/cloudflare-before.json
           cp /tmp/cloudflare-before.json /tmp/cloudflare-rollback.json
 
-      - name: Deploy exact revision
+      - name: Deploy exact revision and protected API origin
         shell: bash
         run: |
           set -euo pipefail
           npx --yes wrangler@4.68.0 deploy \
-            --var "NEXTLAW_API_ORIGIN:$NEXTLAW_API_ORIGIN" \
             --var "NEXTLAW_EXACT_REVISION:$NEXTLAW_EXACT_REVISION" \
             > /tmp/cloudflare-deploy.log
+          printf '%s' "$NEXTLAW_API_ORIGIN" | npx --yes wrangler@4.68.0 secret put NEXTLAW_API_ORIGIN >> /tmp/cloudflare-deploy.log
 
       - name: Verify live HTTPS PWA and security boundary
         shell: bash
@@ -103,6 +103,7 @@ jobs:
               'security_headers': 'passed',
               'api_status_proxy': 'passed',
               'secret_absence': 'passed',
+              'protected_api_origin': 'cloudflare-secret',
               'rollback': {
                   'previous_deployments_recorded': len(before),
                   'current_deployments_recorded': len(after),
