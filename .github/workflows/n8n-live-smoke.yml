@@ -15,7 +15,7 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
           persist-credentials: false
-      - name: Import and publish exact workflow
+      - name: Import, publish, and export exact workflow
         shell: bash
         run: |
           set -euo pipefail
@@ -33,6 +33,18 @@ jobs:
             -v "$data_dir:/home/node/.n8n" \
             "docker.n8n.io/n8nio/n8n:${N8N_VERSION}" \
             publish:workflow --id=nextlaw607ReleaseSmoke
+          docker run --rm \
+            -u node \
+            -v "$data_dir:/home/node/.n8n" \
+            "docker.n8n.io/n8nio/n8n:${N8N_VERSION}" \
+            export:workflow --id=nextlaw607ReleaseSmoke --output=/home/node/.n8n/nextlaw607-draft.json
+          docker run --rm \
+            -u node \
+            -v "$data_dir:/home/node/.n8n" \
+            "docker.n8n.io/n8nio/n8n:${N8N_VERSION}" \
+            export:workflow --id=nextlaw607ReleaseSmoke --published --output=/home/node/.n8n/nextlaw607-published.json
+          cp "$data_dir/nextlaw607-draft.json" /tmp/nextlaw607-n8n-draft.json
+          cp "$data_dir/nextlaw607-published.json" /tmp/nextlaw607-n8n-published.json
       - name: Execute production webhook path
         shell: bash
         env:
@@ -101,4 +113,6 @@ jobs:
             n8n-live-evidence.json
             /tmp/nextlaw607-n8n-response.json
             /tmp/nextlaw607-n8n-server.log
+            /tmp/nextlaw607-n8n-draft.json
+            /tmp/nextlaw607-n8n-published.json
           if-no-files-found: warn
