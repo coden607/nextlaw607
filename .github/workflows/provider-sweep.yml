@@ -2,65 +2,146 @@ name: Protected provider verification sweep
 
 on:
   workflow_dispatch:
-  push:
+  pull_request:
     branches:
-      - feat/2026-production-stack
+      - main
+    paths:
+      - .github/workflows/provider-sweep.yml
 
 permissions:
   contents: read
-  actions: write
 
 jobs:
-  dispatch-provider-gates:
-    if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[provider-sweep]')
+  mem0-live:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     env:
-      GH_TOKEN: ${{ github.token }}
-      TARGET_REF: feat/2026-production-stack
+      MEM0_API_KEY: ${{ secrets.MEM0_API_KEY }}
+      NEXTLAW_EXACT_REVISION: ${{ github.event.pull_request.head.sha || github.sha }}
+      NEXTLAW_MEM0_TEST_SCOPE: nextlaw607-provider-sweep
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.sha }}
+          ref: ${{ env.NEXTLAW_EXACT_REVISION }}
           persist-credentials: false
-
-      - name: Dispatch Mem0 provider gate
-        run: gh workflow run mem0-live-smoke.yml --repo "$GITHUB_REPOSITORY" --ref "$TARGET_REF"
-
-      - name: Dispatch Langfuse provider gate
-        run: gh workflow run langfuse-live-export.yml --repo "$GITHUB_REPOSITORY" --ref "$TARGET_REF"
-
-      - name: Dispatch Sentry provider gate
-        run: gh workflow run sentry-live-export.yml --repo "$GITHUB_REPOSITORY" --ref "$TARGET_REF"
-
-      - name: Dispatch Ragas and Claude provider gate
-        run: gh workflow run evaluation-live-smoke.yml --repo "$GITHUB_REPOSITORY" --ref "$TARGET_REF"
-
-      - name: Record sweep dispatch evidence
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Require protected Mem0 credential
         shell: bash
         run: |
-          set -euo pipefail
-          python3 - <<'PY'
-          import json, os
-          from pathlib import Path
-          evidence = {
-              "schema_version": 1,
-              "revision": os.environ["GITHUB_SHA"],
-              "target_ref": os.environ["TARGET_REF"],
-              "dispatched": [
-                  "mem0-live-smoke.yml",
-                  "langfuse-live-export.yml",
-                  "sentry-live-export.yml",
-                  "evaluation-live-smoke.yml",
-              ],
-              "cloudflare_live_deploy_dispatched": False,
-              "cloudflare_block_reason": "Production API origin must be verified before live deployment.",
-          }
-          Path("provider-sweep-dispatch.json").write_text(json.dumps(evidence, indent=2) + "\n")
-          PY
+          test -n "$MEM0_API_KEY" || { echo '::error::Missing MEM0_API_KEY'; exit 1; }
+      - run: python -m pip install --upgrade pip
+      - run: pip install -e '.[memory]' pytest
+      - run: pytest -q compat/test_mem0_live_smoke.py
 
-      - uses: actions/upload-artifact@v4
+  langfuse-live:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      LANGFUSE_PUBLIC_KEY: ${{ secrets.LANGFUSE_PUBLIC_KEY }}
+      LANGFUSE_SECRET_KEY: ${{ secrets.LANGFUSE_SECRET_KEY }}
+      LANGFUSE_BASE_URL: ${{ vars.LANGFUSE_BASE_URL || 'https://cloud.langfuse.com' }}
+      NEXTLAW_EXACT_REVISION: ${{ github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - uses: actions/checkout@v4
         with:
-          name: provider-sweep-dispatch-${{ github.sha }}
-          path: provider-sweep-dispatch.json
-          if-no-files-found: error
+          ref: ${{ env.NEXTLAW_EXACT_REVISION }}
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Require protected Langfuse credentials
+        shell: bash
+        run: |
+          test -n "$LANGFUSE_PUBLIC_KEY" || { echo '::error::Missing LANGFUSE_PUBLIC_KEY'; exit 1; }
+          test -n "$LANGFUSE_SECRET_KEY" || { echo '::error::Missing LANGFUSE_SECRET_KEY'; exit 1; }
+          case "$LANGFUSE_BASE_URL" in https://*) ;; *) echo '::error::LANGFUSE_BASE_URL must use HTTPS'; exit 1;; esac
+      - run: python -m pip install --upgrade pip
+      - run: pip install -e '.[observability]' pytest
+      - run: pytest -q compat/test_langfuse_live_smoke.py
+
+  sentry-live:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+      SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+      SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
+      SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
+      SENTRY_BASE_URL: ${{ vars.SENTRY_BASE_URL || 'https://sentry.io' }}
+      NEXTLAW_EXACT_REVISION: ${{ github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.NEXTLAW_EXACT_REVISION }}
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Require protected Sentry credentials
+        shell: bash
+        run: |
+          for name in SENTRY_DSN SENTRY_AUTH_TOKEN SENTRY_ORG SENTRY_PROJECT; do
+            eval "value=\${$name-}"
+            test -n "$value" || { echo "::error::Missing $name"; exit 1; }
+          done
+          case "$SENTRY_BASE_URL" in https://*) ;; *) echo '::error::SENTRY_BASE_URL must use HTTPS'; exit 1;; esac
+      - run: python -m pip install --upgrade pip
+      - run: pip install -e '.[observability]' pytest
+      - run: pytest -q compat/test_sentry_live_smoke.py
+
+  evaluation-live:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      NEXTLAW_EVAL_MODEL: ${{ vars.NEXTLAW_EVAL_MODEL || 'claude-sonnet-5' }}
+      NEXTLAW_EXACT_REVISION: ${{ github.event.pull_request.head.sha || github.sha }}
+      RAGAS_DO_NOT_TRACK: 'true'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.NEXTLAW_EXACT_REVISION }}
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Require protected Anthropic credential
+        shell: bash
+        run: |
+          test -n "$ANTHROPIC_API_KEY" || { echo '::error::Missing ANTHROPIC_API_KEY'; exit 1; }
+          test -n "$NEXTLAW_EVAL_MODEL" || { echo '::error::Missing NEXTLAW_EVAL_MODEL'; exit 1; }
+      - run: python -m pip install --upgrade pip
+      - run: pip install -e '.[evaluation]' pytest
+      - run: pytest -q compat/test_evaluation_live_smoke.py
+
+  cloudflare-live-preflight:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      NEXTLAW_API_ORIGIN: ${{ secrets.NEXTLAW_API_ORIGIN }}
+      CLOUDFLARE_DEPLOY_URL: ${{ secrets.CLOUDFLARE_DEPLOY_URL }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Require protected Cloudflare deployment configuration
+        shell: bash
+        run: |
+          for name in CLOUDFLARE_API_TOKEN CLOUDFLARE_ACCOUNT_ID NEXTLAW_API_ORIGIN CLOUDFLARE_DEPLOY_URL; do
+            eval "value=\${$name-}"
+            test -n "$value" || { echo "::error::Missing $name"; exit 1; }
+          done
+          case "$NEXTLAW_API_ORIGIN" in https://*) ;; *) echo '::error::NEXTLAW_API_ORIGIN must use HTTPS'; exit 1;; esac
+          case "$CLOUDFLARE_DEPLOY_URL" in https://*) ;; *) echo '::error::CLOUDFLARE_DEPLOY_URL must use HTTPS'; exit 1;; esac
+      - name: Verify Cloudflare CLI authentication without deploying
+        run: npx --yes wrangler@4.68.0 whoami
+      - name: Verify production API origin is ready before deployment
+        run: curl --fail --silent --show-error "$NEXTLAW_API_ORIGIN/status/ready" >/dev/null
