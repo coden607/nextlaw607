@@ -1,0 +1,14 @@
+{
+  "name": "@nextlaw607/web",
+  "private": true,
+  "version": "0.2.0",
+  "type": "module",
+  "scripts": {
+    "build": "tsc -p tsconfig.json && node scripts/build-static.mjs",
+    "dev": "npm run build && node server.mjs",
+    "test": "npm run build && node tests/run.mjs"
+  },
+  "devDependencies": {
+    "typescript": "5.8.3"
+  }
+}

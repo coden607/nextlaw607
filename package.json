@@ -1,0 +1,12 @@
+{
+  "name": "nextlaw607",
+  "private": true,
+  "version": "0.2.0",
+  "scripts": {
+    "build": "npm --prefix apps/web run build",
+    "dev": "./scripts/dev.sh",
+    "test:web": "npm --prefix apps/web test",
+    "test": "python -m pytest -q && npm run test:web",
+    "verify": "./scripts/verify.sh"
+  }
+}

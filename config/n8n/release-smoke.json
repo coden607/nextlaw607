@@ -1,0 +1,58 @@
+{
+  "id": "nextlaw607ReleaseSmoke",
+  "name": "NextLaw607 development-only release smoke",
+  "active": false,
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "nextlaw607-release-smoke",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "3b0af51e-75d8-4ecf-ae60-47f536d927f9",
+      "name": "Release Smoke Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [0, 0],
+      "webhookId": "9e2322f8-7aed-4ad8-8d50-1dd620d52c0a"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\"scope\":\"development-only\",\"authority_eligible\":false,\"trusted\":false,\"verified_authority\":false}",
+        "options": {}
+      },
+      "id": "9678ffb1-dd1f-4312-899d-b8fe50a38763",
+      "name": "Return Safe Envelope",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [260, 0]
+    }
+  ],
+  "connections": {
+    "Release Smoke Webhook": {
+      "main": [
+        [
+          {
+            "node": "Return Safe Envelope",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "c8571537-a606-4b71-9620-7889a74d52c0",
+  "meta": {
+    "nextlaw607": {
+      "scope": "development-only",
+      "legalAuthority": false
+    }
+  },
+  "pinData": {},
+  "tags": []
+}
