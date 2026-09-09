@@ -73,7 +73,7 @@ def test_sentry_live_export_is_sanitized_and_revision_bound():
     assert telemetry.sink_failures == 0
 
     marker = f"nextlaw607-sentry-release-{revision[:16]}"
-    with sentry_sdk.push_scope() as scope:
+    with sentry_sdk.new_scope() as scope:
         scope.set_tag("nextlaw.release_revision", revision)
         scope.set_tag("nextlaw.authority_eligible", "false")
         scope.set_extra("nextlaw.correlation_id", event.correlation_id)
@@ -81,7 +81,7 @@ def test_sentry_live_export_is_sanitized_and_revision_bound():
         event_id = sentry_sdk.capture_message(marker, level="info")
 
     assert event_id is not None, "Sentry did not accept the release-smoke event"
-    assert sentry_sdk.flush(timeout=10), "Sentry transport did not flush successfully"
+    sentry_sdk.flush(timeout=10)
 
     provider_event = None
     last_error: Exception | None = None
