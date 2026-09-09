@@ -61,12 +61,16 @@ jobs:
           done
           test "$ready" = true
 
-          curl --fail --silent --show-error \
+          http_status="$(curl --silent --show-error \
+            -o /tmp/nextlaw607-n8n-response.json \
+            -w '%{http_code}' \
             -X POST \
             -H 'content-type: application/json' \
             --data '{"probe":"nextlaw607-release-smoke"}' \
-            http://127.0.0.1:5678/webhook/nextlaw607-release-smoke \
-            > /tmp/nextlaw607-n8n-response.json
+            http://127.0.0.1:5678/webhook/nextlaw607-release-smoke)"
+          echo "n8n webhook HTTP status: $http_status"
+          cat /tmp/nextlaw607-n8n-response.json || true
+          test "$http_status" = "200"
 
           python3 - <<'PY'
           import json
