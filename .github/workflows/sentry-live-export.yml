@@ -1,0 +1,52 @@
+name: Sentry live export smoke
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  sentry-live-export:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+      SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+      SENTRY_ORG: ${{ vars.SENTRY_ORG }}
+      SENTRY_PROJECT: ${{ vars.SENTRY_PROJECT }}
+      NEXTLAW_EXACT_REVISION: ${{ github.sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Validate protected provider configuration
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$SENTRY_DSN"
+          test -n "$SENTRY_AUTH_TOKEN"
+          test -n "$SENTRY_ORG"
+          test -n "$SENTRY_PROJECT"
+          test "$(git rev-parse HEAD)" = "$NEXTLAW_EXACT_REVISION"
+
+      - name: Install exact observability runtime
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e '.[observability]' pytest
+
+      - name: Export sanitized event and verify provider readback
+        run: pytest -q compat/test_sentry_live_smoke.py
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: sentry-live-evidence-${{ github.sha }}
+          path: sentry-live-evidence.json
+          if-no-files-found: warn
