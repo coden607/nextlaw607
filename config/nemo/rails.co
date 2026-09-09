@@ -1,0 +1,6 @@
+define flow nextlaw deterministic preflight required
+  $preflight_required = True
+
+
+define flow nextlaw citation firewall authority required
+  $citation_firewall_authority_required = True
