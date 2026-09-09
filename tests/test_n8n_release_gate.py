@@ -59,3 +59,12 @@ def test_n8n_live_smoke_activates_through_authenticated_runtime_api() -> None:
     assert "publish:workflow" not in smoke
     assert "curl -c \"$cookie_jar\"" in smoke
     assert "curl -b \"$cookie_jar\"" in smoke
+
+
+def test_n8n_live_smoke_waits_for_rest_routes_before_authentication() -> None:
+    smoke = Path(".github/workflows/n8n-live-smoke.yml").read_text(encoding="utf-8")
+
+    assert "/rest/settings" in smoke
+    assert "rest_ready=false" in smoke
+    assert 'test "$rest_ready" = true' in smoke
+    assert "WHERE email = ?" in smoke
