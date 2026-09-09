@@ -46,3 +46,16 @@ def test_n8n_live_smoke_uses_static_webhook_path_and_proves_registration() -> No
     assert 'webhook_entity' in smoke
     assert 'workflowId' in smoke
     assert 'nextlaw607ReleaseSmoke' in smoke
+
+
+def test_n8n_live_smoke_activates_through_authenticated_runtime_api() -> None:
+    smoke = Path(".github/workflows/n8n-live-smoke.yml").read_text(encoding="utf-8")
+
+    assert "/rest/owner/setup" in smoke
+    assert "/rest/login" in smoke
+    assert "/rest/workflows/${workflow_id}/activate" in smoke
+    assert '"versionId"' in smoke
+    assert "import:workflow --input=/work/release-smoke.json --userId=\"$owner_id\"" in smoke
+    assert "publish:workflow" not in smoke
+    assert "curl -c \"$cookie_jar\"" in smoke
+    assert "curl -b \"$cookie_jar\"" in smoke
