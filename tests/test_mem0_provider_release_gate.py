@@ -13,6 +13,16 @@ def test_mem0_provider_release_gate_requires_real_service_and_exact_revision_evi
     assert "actions/upload-artifact@v4" in text
 
 
+def test_mem0_provider_workflow_is_controlled_manual_gate():
+    workflow = Path(".github/workflows/mem0-live-smoke.yml")
+    text = workflow.read_text(encoding="utf-8")
+    trigger_section = text.split("permissions:", 1)[0]
+
+    assert "workflow_dispatch:" in trigger_section
+    assert "\n  push:" not in trigger_section
+    assert "\n  pull_request:" not in trigger_section
+
+
 def test_mem0_provider_live_smoke_must_prove_scope_delete_and_requery_through_adapter():
     smoke = Path("compat/test_mem0_live_smoke.py")
     assert smoke.exists(), "provider-backed Mem0 add/read/delete/re-query evidence is required"
