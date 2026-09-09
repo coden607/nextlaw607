@@ -1,8 +1,9 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
-import re
 from collections.abc import Iterable
+from dataclasses import dataclass
+from pathlib import Path
+import re
 
 
 @dataclass(frozen=True)
@@ -83,3 +84,24 @@ class NemoGuardrailsAdapter:
         except Exception:
             return GuardrailDecision(False, "NeMo Guardrails runtime unavailable")
         return GuardrailDecision(True, "NeMo Guardrails runtime available")
+
+    def configured_runtime_status(self, config_path: str | Path) -> GuardrailDecision:
+        """Verify that the committed rails configuration is loadable by NeMo.
+
+        This is intentionally configuration-only: it does not call an LLM and it
+        cannot make or promote legal-authority decisions. Deterministic preflight
+        remains mandatory before any NeMo/model/tool execution.
+        """
+
+        path = Path(config_path)
+        if not path.is_dir():
+            return GuardrailDecision(False, "NeMo Guardrails configuration missing")
+        try:
+            from nemoguardrails import RailsConfig
+
+            config = RailsConfig.from_path(str(path))
+        except Exception:
+            return GuardrailDecision(False, "NeMo Guardrails configuration invalid")
+        if config is None:
+            return GuardrailDecision(False, "NeMo Guardrails configuration invalid")
+        return GuardrailDecision(True, "NeMo Guardrails configured runtime available")
