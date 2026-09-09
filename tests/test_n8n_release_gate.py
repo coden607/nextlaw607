@@ -34,10 +34,15 @@ def test_n8n_release_workflow_is_development_only_and_cannot_promote_authority()
         assert forbidden not in serialized
 
 
-def test_n8n_live_smoke_calls_the_registered_production_webhook_route() -> None:
+def test_n8n_live_smoke_uses_static_webhook_path_and_proves_registration() -> None:
     workflow = json.loads(Path("config/n8n/release-smoke.json").read_text(encoding="utf-8"))
     webhook = next(node for node in workflow["nodes"] if node["name"] == "Release Smoke Webhook")
-    expected_route = f'/webhook/{webhook["webhookId"]}/{webhook["parameters"]["path"]}'
+    assert ":" not in webhook["parameters"]["path"], "release smoke webhook must remain a static path"
+    expected_route = f'/webhook/{webhook["parameters"]["path"]}'
 
     smoke = Path(".github/workflows/n8n-live-smoke.yml").read_text(encoding="utf-8")
     assert expected_route in smoke
+    assert f'/webhook/{webhook["webhookId"]}/{webhook["parameters"]["path"]}' not in smoke
+    assert 'webhook_entity' in smoke
+    assert 'workflowId' in smoke
+    assert 'nextlaw607ReleaseSmoke' in smoke
