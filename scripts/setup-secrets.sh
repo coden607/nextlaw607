@@ -42,7 +42,7 @@ get_value() {
 set_gh_secret() {
   name="$1"
   value=$(get_value "$name")
-  printf '%s' "$value" | gh secret set "$name" --repo "$REPO" --body - >/dev/null
+  printf '%s' "$value" | gh secret set "$name" --repo "$REPO" >/dev/null
   unset value
   printf 'configured GitHub secret: %s\n' "$name"
 }
