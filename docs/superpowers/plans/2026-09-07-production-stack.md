@@ -86,8 +86,10 @@
 - [x] Wire lazy OpenTelemetry, Langfuse, and Sentry sink adapters plus an `observability` optional dependency group; keep vendor SDKs out of startup paths unless explicitly enabled.
 - [x] Add a dedicated real-package compatibility lane that installs Langfuse/OpenTelemetry/Sentry and verifies safe adapter behavior without production credentials.
 - [x] Add a real OpenTelemetry OTLP HTTP export smoke with protobuf-level payload inspection; exact revision `605bd5f63dcc5fb8e368e43fdbeee8bad7e50b41` passed live export, CI, browser, Supabase RLS, and Archon gates and OpenTelemetry is promoted to `verified`.
-- [ ] Add controlled external Langfuse export evidence proving only sanitized metadata leaves the trust boundary before promoting Langfuse.
-- [ ] Add controlled external Sentry export evidence proving only sanitized span/exception metadata leaves the trust boundary before promoting Sentry.
+- [x] Add controlled Langfuse live-export/readback gate using protected provider credentials and production `PrivacySafeTelemetry -> LangfuseSink` sanitization.
+- [ ] Run the controlled Langfuse provider workflow successfully and record exact-revision sanitized server readback before promoting Langfuse.
+- [x] Add controlled Sentry live-export/readback gate using protected DSN/API credentials, production `PrivacySafeTelemetry -> SentrySink`, default-PII disabled, and revision-bound evidence.
+- [ ] Run the controlled Sentry provider workflow successfully and record exact-revision sanitized provider readback before promoting Sentry.
 
 ### Task 8: Evaluation lane
 **Files:** extend `evals/`, CI workflow and release validator.
