@@ -77,7 +77,23 @@ jobs:
           done
           test "$ready" = true
 
-          production_route="/webhook/9e2322f8-7aed-4ad8-8d50-1dd620d52c0a/nextlaw607-release-smoke"
+          python3 - "$data_dir/database.sqlite" <<'PY' | tee /tmp/nextlaw607-n8n-webhooks.txt
+          import sqlite3
+          import sys
+
+          db = sqlite3.connect(sys.argv[1])
+          rows = db.execute(
+              'SELECT "workflowId", "webhookPath", method, node, "webhookId" '
+              'FROM webhook_entity WHERE "workflowId" = ?',
+              ('nextlaw607ReleaseSmoke',),
+          ).fetchall()
+          print(rows)
+          expected = ('nextlaw607ReleaseSmoke', 'nextlaw607-release-smoke', 'POST', 'Release Smoke Webhook')
+          if not any(row[:4] == expected for row in rows):
+              raise SystemExit(f'expected static webhook registration missing: {rows!r}')
+          PY
+
+          production_route="/webhook/nextlaw607-release-smoke"
           http_status="$(curl --silent --show-error \
             -o /tmp/nextlaw607-n8n-response.json \
             -w '%{http_code}' \
@@ -117,4 +133,5 @@ jobs:
             /tmp/nextlaw607-n8n-server.log
             /tmp/nextlaw607-n8n-draft.json
             /tmp/nextlaw607-n8n-published.json
+            /tmp/nextlaw607-n8n-webhooks.txt
           if-no-files-found: warn
