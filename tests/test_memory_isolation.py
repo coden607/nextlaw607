@@ -130,3 +130,27 @@ def test_mem0_export_filters_exact_scope_and_delete_uses_ids_not_wildcards():
     }
     assert deleted == 1
     assert backend.delete_calls == ["m1"]
+
+
+def test_mem0_export_rejects_provider_records_without_exact_nextlaw_scope_attestation():
+    backend = FakeMem0Backend()
+    adapter = Mem0MemoryAdapter(backend)
+    scope = MemoryScope("user-1", "case-a", "research", "session-1")
+    adapter.remember("owned memory", scope=scope, consent=True)
+    backend.items.append(
+        {
+            "id": "foreign-memory",
+            "memory": "must never cross the boundary",
+            "metadata": {
+                "case_id": "case-a",
+                "authority_eligible": False,
+                "nextlaw_scope_version": 1,
+                "nextlaw_scope_fingerprint": "foreign-scope",
+            },
+        }
+    )
+
+    exported = adapter.export(scope)
+
+    assert [record.memory_id for record in exported] == ["m1"]
+    assert [record.content for record in exported] == ["owned memory"]
