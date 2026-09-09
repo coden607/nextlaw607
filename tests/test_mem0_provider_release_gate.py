@@ -13,18 +13,20 @@ def test_mem0_provider_release_gate_requires_real_service_and_exact_revision_evi
     assert "actions/upload-artifact@v4" in text
 
 
-def test_mem0_provider_live_smoke_must_prove_scope_delete_and_requery():
+def test_mem0_provider_live_smoke_must_prove_scope_delete_and_requery_through_adapter():
     smoke = Path("compat/test_mem0_live_smoke.py")
     assert smoke.exists(), "provider-backed Mem0 add/read/delete/re-query evidence is required"
 
     text = smoke.read_text(encoding="utf-8")
     for required in (
         "MemoryClient",
+        "Mem0MemoryAdapter",
         "NEXTLAW_MEM0_TEST_SCOPE",
-        ".add(",
-        ".get_all(",
-        ".delete(",
+        "adapter.remember(",
+        "adapter.export(",
+        "adapter.delete(",
         "authority_eligible",
+        "memory_can_verify_authority",
         "mem0-live-evidence.json",
     ):
         assert required in text, required
