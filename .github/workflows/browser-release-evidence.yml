@@ -41,8 +41,10 @@ jobs:
           cat /tmp/nextlaw-web.log
           exit 1
       - name: Capture browser evidence
-        continue-on-error: true
+        env:
+          NEXTLAW_REVISION: ${{ github.event.pull_request.head.sha || github.sha }}
         run: node apps/web/scripts/browser-evidence.mjs
+        continue-on-error: true
       - name: Verify release gates
         run: ./scripts/verify-release.sh
       - uses: actions/upload-artifact@v4
