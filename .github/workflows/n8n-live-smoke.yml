@@ -1,0 +1,95 @@
+name: n8n live smoke
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  n8n-live-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      N8N_VERSION: 2.38.4
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - name: Import and publish exact workflow
+        shell: bash
+        run: |
+          set -euo pipefail
+          data_dir="$RUNNER_TEMP/nextlaw607-n8n"
+          mkdir -p "$data_dir"
+          chmod 0777 "$data_dir"
+          docker run --rm \
+            -u node \
+            -v "$data_dir:/home/node/.n8n" \
+            -v "$PWD/config/n8n:/work:ro" \
+            "docker.n8n.io/n8nio/n8n:${N8N_VERSION}" \
+            import:workflow --input=/work/release-smoke.json
+          docker run --rm \
+            -u node \
+            -v "$data_dir:/home/node/.n8n" \
+            "docker.n8n.io/n8nio/n8n:${N8N_VERSION}" \
+            publish:workflow --id=nextlaw607ReleaseSmoke
+      - name: Execute production webhook path
+        shell: bash
+        env:
+          NEXTLAW_EXACT_REVISION: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          set -euo pipefail
+          data_dir="$RUNNER_TEMP/nextlaw607-n8n"
+          docker run -d --name nextlaw607-n8n \
+            -p 127.0.0.1:5678:5678 \
+            -e N8N_DIAGNOSTICS_ENABLED=false \
+            -e N8N_VERSION_NOTIFICATIONS_ENABLED=false \
+            -e N8N_TEMPLATES_ENABLED=false \
+            -e N8N_HOST=0.0.0.0 \
+            -e N8N_PORT=5678 \
+            -v "$data_dir:/home/node/.n8n" \
+            "docker.n8n.io/n8nio/n8n:${N8N_VERSION}"
+          trap 'docker logs nextlaw607-n8n || true; docker rm -f nextlaw607-n8n >/dev/null 2>&1 || true' EXIT
+
+          ready=false
+          for attempt in $(seq 1 60); do
+            if curl --fail --silent --show-error http://127.0.0.1:5678/healthz >/dev/null; then
+              ready=true
+              break
+            fi
+            sleep 1
+          done
+          test "$ready" = true
+
+          curl --fail --silent --show-error \
+            -X POST \
+            -H 'content-type: application/json' \
+            --data '{"probe":"nextlaw607-release-smoke"}' \
+            http://127.0.0.1:5678/webhook/nextlaw607-release-smoke \
+            > /tmp/nextlaw607-n8n-response.json
+
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          payload = json.loads(Path('/tmp/nextlaw607-n8n-response.json').read_text(encoding='utf-8'))
+          expected = {
+              'scope': 'development-only',
+              'authority_eligible': False,
+              'trusted': False,
+              'verified_authority': False,
+          }
+          if payload != expected:
+              raise SystemExit(f'unexpected n8n webhook payload: {payload!r}')
+          PY
+
+          printf '{"schema_version":1,"revision":"%s","n8n_version":"%s","workflow_id":"nextlaw607ReleaseSmoke","scope":"development-only","authority_eligible":false,"webhook_execution":"passed"}\n' \
+            "$NEXTLAW_EXACT_REVISION" "$N8N_VERSION" > n8n-live-evidence.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: n8n-live-evidence-${{ github.event.pull_request.head.sha || github.sha }}
+          path: |
+            n8n-live-evidence.json
+            /tmp/nextlaw607-n8n-response.json
+          if-no-files-found: warn
