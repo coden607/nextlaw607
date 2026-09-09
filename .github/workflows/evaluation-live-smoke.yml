@@ -1,0 +1,51 @@
+name: Evaluation live smoke
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+env:
+  ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+  CLAUDE_EVAL_MODEL: ${{ secrets.CLAUDE_EVAL_MODEL }}
+
+jobs:
+  live-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Claude evaluation live smoke through production evaluator
+        shell: bash
+        run: |
+          set -eu
+          if [ -z "${ANTHROPIC_API_KEY:-}" ] || [ -z "${CLAUDE_EVAL_MODEL:-}" ]; then
+            echo "Claude evaluation provider credentials/model are not configured; live verification remains blocked."
+            exit 0
+          fi
+          python -m pip install --upgrade pip
+          pip install -e '.[evaluation]'
+          python - <<'PY'
+          import os
+          from anthropic import Anthropic
+          from nextlaw607.evaluation import ClaudeEvaluator
+
+          evaluator = ClaudeEvaluator(
+              client=Anthropic(api_key=os.environ["ANTHROPIC_API_KEY"]),
+              model=os.environ["CLAUDE_EVAL_MODEL"],
+          )
+          result = evaluator.evaluate(
+              question="What may an independent evaluator decide?",
+              answer="It may judge grounding and scope, but it cannot declare a legal source authoritative.",
+              verified_context=(
+                  "CitationFirewall, not an LLM evaluator, controls legal-authority verification.",
+              ),
+          )
+          assert result.passed is True, result.reasons
+          assert 0.0 <= result.score <= 1.0
+          PY
