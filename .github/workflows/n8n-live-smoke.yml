@@ -77,6 +77,47 @@ jobs:
           done
           test "$ready" = true
 
+          python3 - "$data_dir/database.sqlite" <<'PY' | tee /tmp/nextlaw607-n8n-publication-state.txt
+          import json
+          import sqlite3
+          import sys
+
+          db = sqlite3.connect(sys.argv[1])
+          db.row_factory = sqlite3.Row
+          workflow_id = 'nextlaw607ReleaseSmoke'
+
+          workflow = db.execute(
+              'SELECT id, active, "activeVersionId", "versionId", "triggerCount" '
+              'FROM workflow_entity WHERE id = ?',
+              (workflow_id,),
+          ).fetchone()
+          print('workflow_entity=', dict(workflow) if workflow else None)
+
+          for table in (
+              'workflow_published_version',
+              'workflow_publication_outbox',
+              'workflow_publication_trigger_status',
+              'webhook_entity',
+          ):
+              exists = db.execute(
+                  "SELECT 1 FROM sqlite_master WHERE type='table' AND name=?",
+                  (table,),
+              ).fetchone()
+              if not exists:
+                  print(f'{table}=<missing>')
+                  continue
+              columns = [row['name'] for row in db.execute(f'PRAGMA table_info("{table}")')]
+              print(f'{table}.columns=', columns)
+              if 'workflowId' in columns:
+                  rows = [dict(row) for row in db.execute(
+                      f'SELECT * FROM "{table}" WHERE "workflowId" = ?',
+                      (workflow_id,),
+                  ).fetchall()]
+              else:
+                  rows = [dict(row) for row in db.execute(f'SELECT * FROM "{table}" LIMIT 20').fetchall()]
+              print(f'{table}.rows=', json.dumps(rows, sort_keys=True, default=str))
+          PY
+
           python3 - "$data_dir/database.sqlite" <<'PY' | tee /tmp/nextlaw607-n8n-webhooks.txt
           import sqlite3
           import sys
@@ -134,4 +175,5 @@ jobs:
             /tmp/nextlaw607-n8n-draft.json
             /tmp/nextlaw607-n8n-published.json
             /tmp/nextlaw607-n8n-webhooks.txt
+            /tmp/nextlaw607-n8n-publication-state.txt
           if-no-files-found: warn
