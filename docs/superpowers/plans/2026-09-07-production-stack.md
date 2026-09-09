@@ -97,7 +97,8 @@
 - [x] Add deterministic legal checks, Ragas adapter, Claude independent-judge schema, and adversarial legal corpus foundations.
 - [x] Require deterministic checks to outrank any LLM judge result; evaluators cannot create legal authority.
 - [x] Publish exact-revision machine-readable evaluation compatibility evidence in CI.
-- [ ] Add provider-backed Ragas metric execution and Claude judge execution using protected credentials before promotion to `verified`.
+- [x] Add a controlled provider-backed Ragas 0.4 collections + Claude Sonnet 5 evaluation gate using protected `ANTHROPIC_API_KEY`, exact-revision evidence, no prompt/context persistence, and an explicit deterministic-failure override regression.
+- [ ] Run the controlled provider workflow successfully and record exact-revision Ragas metric + Claude judge evidence before promoting `ragas` and `claude-evaluator` to `verified`.
 
 ### Task 9: Web platform and production deployment
 **Files:** PWA dependencies/components, Cloudflare config/workflows, security tests.
