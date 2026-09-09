@@ -57,7 +57,7 @@
 - [x] RED tests for typed state, deterministic legal verification node, tool allowlisting, and fail-closed transitions.
 - [x] Add concrete Pydantic AI agent boundary and LangGraph state machine adapters behind the deterministic `AgentWorkflow`; missing/invalid framework runtimes fail closed and cannot bypass CitationFirewall.
 - [x] Run a dedicated compatibility job with the real Pydantic AI and LangGraph optional dependencies installed; the no-network compatibility lane compiles/invokes real LangGraph and drafts through Pydantic AI `TestModel` behind NextLaw's deterministic trust boundary.
-- [ ] Keep Archon as development/harness integration, not per-request legal authority.
+- [x] Keep Archon as development/harness integration, not per-request legal authority; validate the committed YAML workflow against the pinned current Archon engine.
 - [x] Verify model/tool failures never bypass legal verification in the deterministic orchestration core.
 
 ### Task 5: Mem0 memory isolation
@@ -76,30 +76,33 @@
 - [x] Implement deterministic preflight/redaction plus explicit default-deny tool authorization; authority promotion is non-overridable and remains CitationFirewall-only.
 - [x] Add a deterministic-first `NemoGuardrailsAdapter`, optional `nemoguardrails>=0.24,<0.25` dependency, and dedicated real-package compatibility CI lane.
 - [x] Verify allowed deterministic flows continue and denied injection/tool/bypass flows fail closed in the core suite.
-- [ ] Before promoting NeMo from `implemented` to `verified`, add a controlled configured-rails smoke test that instantiates real NeMo rails without provider credentials and proves NextLaw deterministic gates still run first.
+- [x] Add a controlled configured-rails smoke gate and exact-revision evidence before promoting NeMo to `verified`; deterministic gates remain first.
 
 ### Task 7: Observability/debugging
 **Files:** `src/nextlaw607/telemetry.py`, `tests/test_telemetry_privacy.py`, `tests/test_telemetry_adapters.py`, `compat/test_observability_frameworks.py`, `pyproject.toml`, `.github/workflows/ci.yml`, `.env.example`.
 
 - [x] RED tests proving secrets/tokens, prompts, case-private content, authority/legal-source text, email/SSN-like PII, and sink failures cannot leak or alter legal workflow behavior; CI confirmed the missing telemetry boundary as the intended failure.
-- [x] Implement `PrivacySafeTelemetry` with recursive deterministic redaction before any sink sees data, correlation IDs for safe trace joining, and fail-open sink behavior so telemetry outages cannot break legal work.
+- [x] Implement `PrivacySafeTelemetry` with recursive deterministic redaction before any sink sees data, privacy-safe correlation IDs, and fail-open sink behavior so telemetry outages cannot break legal work.
 - [x] Wire lazy OpenTelemetry, Langfuse, and Sentry sink adapters plus an `observability` optional dependency group; keep vendor SDKs out of startup paths unless explicitly enabled.
-- [x] Add a dedicated real-package compatibility lane that installs Langfuse/OpenTelemetry/Sentry, records an in-memory OpenTelemetry span, exercises Langfuse with tracing disabled, and exercises Sentry with no DSN/zero sampling; verify correlation without raw sensitive payload leakage.
-- [ ] Before promoting Langfuse/OpenTelemetry/Sentry from `implemented` to `verified`, add a controlled external-export smoke environment that proves sanitized payloads are the only data received by configured telemetry backends and that production secrets remain server-only.
+- [x] Add a dedicated real-package compatibility lane that installs Langfuse/OpenTelemetry/Sentry and verifies safe adapter behavior without production credentials.
+- [x] Add a real OpenTelemetry OTLP HTTP export smoke with protobuf-level payload inspection; exact revision `605bd5f63dcc5fb8e368e43fdbeee8bad7e50b41` passed live export, CI, browser, Supabase RLS, and Archon gates and OpenTelemetry is promoted to `verified`.
+- [ ] Add controlled external Langfuse export evidence proving only sanitized metadata leaves the trust boundary before promoting Langfuse.
+- [ ] Add controlled external Sentry export evidence proving only sanitized span/exception metadata leaves the trust boundary before promoting Sentry.
 
 ### Task 8: Evaluation lane
 **Files:** extend `evals/`, CI workflow and release validator.
 
-- [ ] Add Ragas retrieval/answer-grounding cases and Claude independent-judge schema.
-- [ ] Require deterministic checks to outrank any LLM judge result.
-- [ ] Add adversarial legal/current-authority regression corpus.
-- [ ] Publish exact-revision machine-readable evaluation evidence.
+- [x] Add deterministic legal checks, Ragas adapter, Claude independent-judge schema, and adversarial legal corpus foundations.
+- [x] Require deterministic checks to outrank any LLM judge result; evaluators cannot create legal authority.
+- [x] Publish exact-revision machine-readable evaluation compatibility evidence in CI.
+- [ ] Add provider-backed Ragas metric execution and Claude judge execution using protected credentials before promotion to `verified`.
 
 ### Task 9: Web platform and production deployment
 **Files:** PWA dependencies/components, Cloudflare config/workflows, security tests.
 
-- [ ] Migrate/confirm React + Vite + Tailwind + shadcn/ui without breaking PWA/offline behavior.
-- [ ] Add Cloudflare deployment bindings, WAF/rate-limit/security-header expectations and smoke checks.
-- [ ] Add Stripe entitlement reconciliation where paid plans require it.
-- [ ] Evaluate Redis/Valkey and Neo4j/Graphiti; activate only with measured benefit.
-- [ ] Run clean-checkout CI, security/privacy/legal evals, browser E2E/accessibility/Core Web Vitals/offline/PWA and deployment smoke tests against the exact promotion revision.
+- [x] Establish responsive accessible PWA quality, offline legal-data cache safety, browser evidence, and performance-conscious interaction patterns.
+- [x] Add Cloudflare worker/runtime configuration, protected HTTPS-only API origin handling, static deploy bundle, and Wrangler dry-run compatibility.
+- [ ] Run a controlled Cloudflare deployment with live HTTPS/static/PWA/API/status/security-header checks, deployed revision identity, and rollback evidence before promotion.
+- [ ] Evaluate Stripe entitlement reconciliation only where paid plans require it; founder/non-billing grants stay server-authoritative.
+- [ ] Evaluate Redis/Valkey and Neo4j/Graphiti; activate only with measured benefit and security/operability evidence.
+- [ ] Run final clean-checkout CI, security/privacy/legal evals, browser E2E/accessibility/Core Web Vitals/offline/PWA and deployment smoke tests against the exact promotion revision with fail-closed release readiness.
