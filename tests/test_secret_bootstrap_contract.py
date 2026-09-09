@@ -37,8 +37,11 @@ def test_secret_bootstrap_contract_exists_and_is_fail_closed():
         assert name in manifest_text, f"missing declared environment name: {name}"
 
     assert "gh auth status" in bootstrap_text
+    assert "gh secret list" in bootstrap_text
     assert "gh secret set" in bootstrap_text
+    assert "gh variable list" in bootstrap_text
     assert "gh variable set" in bootstrap_text
+    assert "NEXTLAW_FORCE_SECRET_REFRESH" in bootstrap_text
     assert "wrangler secret put NEXTLAW_API_ORIGIN" in bootstrap_text
     assert "set -x" not in bootstrap_text
     assert "set +x" in bootstrap_text
