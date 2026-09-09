@@ -4,6 +4,7 @@ set +x
 
 REPO="${NEXTLAW_GITHUB_REPO:-coden607/nextlaw607}"
 MANIFEST="${NEXTLAW_SECRET_MANIFEST:-config/secrets.manifest}"
+FORCE="${NEXTLAW_FORCE_SECRET_REFRESH:-0}"
 
 fail() {
   printf '%s\n' "ERROR: $*" >&2
@@ -39,10 +40,26 @@ get_value() {
   printf '%s' "$value"
 }
 
+has_name() {
+  haystack="$1"
+  needle="$2"
+  printf '%s\n' "$haystack" | grep -Fxq "$needle"
+}
+
 set_gh_secret() {
   name="$1"
+  if [ "$FORCE" != "1" ] && has_name "$GH_SECRET_NAMES" "$name"; then
+    printf 'kept existing GitHub secret: %s\n' "$name"
+    return 0
+  fi
   value=$(get_value "$name")
   printf '%s' "$value" | gh secret set "$name" --repo "$REPO" >/dev/null
+  case "$name" in
+    CLOUDFLARE_API_TOKEN|CLOUDFLARE_ACCOUNT_ID)
+      eval "$name=\$value"
+      export "$name"
+      ;;
+  esac
   unset value
   printf 'configured GitHub secret: %s\n' "$name"
 }
@@ -50,6 +67,10 @@ set_gh_secret() {
 set_gh_variable() {
   name="$1"
   default_value="${2:-}"
+  if [ "$FORCE" != "1" ] && has_name "$GH_VARIABLE_NAMES" "$name"; then
+    printf 'kept existing GitHub variable: %s\n' "$name"
+    return 0
+  fi
   value=$(get_value "$name" "$default_value")
   gh variable set "$name" --repo "$REPO" --body "$value" >/dev/null
   unset value
@@ -58,6 +79,12 @@ set_gh_variable() {
 
 set_cloudflare_secret() {
   name="$1"
+  need npx
+  CF_SECRET_NAMES=$(npx --yes wrangler@4.68.0 secret list --format json 2>/dev/null | sed -n 's/.*"name"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' || true)
+  if [ "$FORCE" != "1" ] && has_name "$CF_SECRET_NAMES" "$name"; then
+    printf 'kept existing Cloudflare secret: %s\n' "$name"
+    return 0
+  fi
   value=$(get_value "$name")
   printf '%s' "$value" | npx --yes wrangler@4.68.0 secret put "$name" >/dev/null
   unset value
@@ -67,6 +94,9 @@ set_cloudflare_secret() {
 need gh
 gh auth status >/dev/null 2>&1 || fail "GitHub CLI is not authenticated"
 [ -r "$MANIFEST" ] || fail "cannot read $MANIFEST"
+
+GH_SECRET_NAMES=$(gh secret list --repo "$REPO" --json name --jq '.[].name')
+GH_VARIABLE_NAMES=$(gh variable list --repo "$REPO" --json name --jq '.[].name')
 
 while IFS=' ' read -r kind name default_value extra; do
   case "${kind:-}" in
@@ -81,7 +111,6 @@ while IFS=' ' read -r kind name default_value extra; do
       ;;
     cloudflare-secret)
       [ -n "${name:-}" ] || fail "invalid Cloudflare manifest entry"
-      need npx
       # Literal contract marker retained for release-gate verification:
       # wrangler secret put NEXTLAW_API_ORIGIN
       set_cloudflare_secret "$name"
@@ -90,4 +119,4 @@ while IFS=' ' read -r kind name default_value extra; do
   esac
 done < "$MANIFEST"
 
-printf '%s\n' 'Secret/bootstrap configuration complete. No secret values were printed or written to project files.'
+printf '%s\n' 'Secret/bootstrap configuration complete. Existing values were preserved unless NEXTLAW_FORCE_SECRET_REFRESH=1.'
