@@ -10,7 +10,7 @@ create table if not exists public.entitlements (
   updated_at timestamptz not null default now(),
   constraint founder_lifetime_canonical check (
     source <> 'founder_lifetime_grant'
-    or (tier = 'pro' and expires_at is null and revocable = false and billing_required = false)
+    or (tier = 'premium' and expires_at is null and revocable = false and billing_required = false)
   )
 );
 
