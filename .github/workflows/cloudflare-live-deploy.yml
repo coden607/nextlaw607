@@ -1,0 +1,127 @@
+name: Cloudflare live deployment evidence
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  cloudflare-live-deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      NEXTLAW_EXACT_REVISION: ${{ github.sha }}
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      NEXTLAW_API_ORIGIN: ${{ secrets.NEXTLAW_API_ORIGIN }}
+      CLOUDFLARE_DEPLOY_URL: ${{ secrets.CLOUDFLARE_DEPLOY_URL }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Validate protected deployment configuration
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$CLOUDFLARE_API_TOKEN"
+          test -n "$CLOUDFLARE_ACCOUNT_ID"
+          test -n "$NEXTLAW_API_ORIGIN"
+          test -n "$CLOUDFLARE_DEPLOY_URL"
+          case "$NEXTLAW_API_ORIGIN" in https://*) ;; *) echo 'NEXTLAW_API_ORIGIN must use https://' >&2; exit 1;; esac
+          case "$CLOUDFLARE_DEPLOY_URL" in https://*) ;; *) echo 'CLOUDFLARE_DEPLOY_URL must use https://' >&2; exit 1;; esac
+
+      - name: Install and build exact revision
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm --prefix apps/web install --no-audit --no-fund
+          npm --prefix apps/web run build
+
+      - name: Capture pre-deploy rollback target
+        shell: bash
+        run: |
+          set -euo pipefail
+          npx --yes wrangler@4.68.0 deployments list --json > /tmp/cloudflare-before.json
+          cp /tmp/cloudflare-before.json /tmp/cloudflare-rollback.json
+
+      - name: Deploy exact revision
+        shell: bash
+        run: |
+          set -euo pipefail
+          npx --yes wrangler@4.68.0 deploy \
+            --var "NEXTLAW_API_ORIGIN:$NEXTLAW_API_ORIGIN" \
+            --var "NEXTLAW_EXACT_REVISION:$NEXTLAW_EXACT_REVISION" \
+            > /tmp/cloudflare-deploy.log
+
+      - name: Verify live HTTPS PWA and security boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+          headers=/tmp/cloudflare-headers.txt
+          body=/tmp/cloudflare-index.html
+          curl --fail --silent --show-error --location --dump-header "$headers" --output "$body" "$CLOUDFLARE_DEPLOY_URL/"
+          grep -qi '^x-content-type-options: nosniff' "$headers"
+          grep -qi '^x-frame-options: DENY' "$headers"
+          grep -qi '^referrer-policy: no-referrer' "$headers"
+          grep -qi '^permissions-policy:' "$headers"
+          grep -q '<html' "$body"
+          if grep -Fq "$NEXTLAW_API_ORIGIN" "$body"; then
+            echo 'protected API origin leaked into static HTML' >&2
+            exit 1
+          fi
+
+          status_headers=/tmp/cloudflare-status-headers.txt
+          curl --fail --silent --show-error --dump-header "$status_headers" --output /tmp/cloudflare-status.json "$CLOUDFLARE_DEPLOY_URL/status/health"
+          grep -qi '^x-content-type-options: nosniff' "$status_headers"
+
+      - name: Record exact revision and rollback evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          npx --yes wrangler@4.68.0 deployments list --json > /tmp/cloudflare-after.json
+          python3 - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          before = json.loads(Path('/tmp/cloudflare-before.json').read_text())
+          after = json.loads(Path('/tmp/cloudflare-after.json').read_text())
+          if not after:
+              raise SystemExit('Cloudflare deployment list is empty after deploy')
+          evidence = {
+              'schema_version': 1,
+              'revision': os.environ['NEXTLAW_EXACT_REVISION'],
+              'deployment_url': os.environ['CLOUDFLARE_DEPLOY_URL'],
+              'https': True,
+              'security_headers': 'passed',
+              'api_status_proxy': 'passed',
+              'secret_absence': 'passed',
+              'rollback': {
+                  'previous_deployments_recorded': len(before),
+                  'current_deployments_recorded': len(after),
+                  'evidence_file': '/tmp/cloudflare-rollback.json',
+              },
+          }
+          Path('cloudflare-live-evidence.json').write_text(json.dumps(evidence, indent=2) + '\n')
+          PY
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: cloudflare-live-evidence-${{ github.sha }}
+          path: |
+            cloudflare-live-evidence.json
+            /tmp/cloudflare-before.json
+            /tmp/cloudflare-after.json
+            /tmp/cloudflare-rollback.json
+            /tmp/cloudflare-deploy.log
+            /tmp/cloudflare-headers.txt
+            /tmp/cloudflare-status-headers.txt
+          if-no-files-found: warn
