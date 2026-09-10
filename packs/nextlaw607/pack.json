@@ -1,0 +1,24 @@
+{
+  "name": "nextlaw607",
+  "display_name": "NextLaw607",
+  "template": "generic",
+  "version": "0.2.0",
+  "skills": [
+    "ny-contract",
+    "ny-family",
+    "ny-criminal",
+    "citation-hygiene",
+    "critic-redteam",
+    "courtlistener-mcp"
+  ],
+  "mcp": [
+    "courtlistener-v4",
+    "nysenate-open-legislation"
+  ],
+  "agents": ["planner", "executor", "critic"],
+  "guardrails": [
+    "no_fabricated_citations",
+    "unverified_authority_fail_closed"
+  ],
+  "knowledge": ["ny-statute-bank", "ny-court-of-appeals-bank"]
+}
