@@ -1,0 +1,22 @@
+{
+  "name": "nextlaw607",
+  "version": "0.2.0",
+  "description": "New York General Counsel terminal: verified-citation drafting, CourtListener harvest, and an adversarial planner-executor-critic triad.",
+  "capabilities": [
+    "legal_research",
+    "citation_verification",
+    "legal_drafting",
+    "family_drl_fca",
+    "criminal_cpl_pl",
+    "contract_gol_ucc",
+    "suppression_analysis",
+    "adversarial_redteam"
+  ],
+  "guardrails": [
+    "no_fabricated_citations",
+    "unverified_authority_fail_closed",
+    "not_a_law_firm_or_attorney",
+    "human_attorney_review_before_execution",
+    "no_advice_to_resist_flee_interfere_lie_or_destroy_evidence"
+  ]
+}
