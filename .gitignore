@@ -17,3 +17,4 @@ tmp/
 *.log
 .output/
 routeTree.gen.ts
+.vercel
