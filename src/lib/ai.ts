@@ -32,7 +32,7 @@ function fallbackTriad(input: CounselInput): TriadResult {
   const tmpl = TEMPLATES.find((t) => t.id === input.templateId) ?? TEMPLATES[0];
   const partyA = input.parties[0]?.name ?? "Party A";
   const partyB = input.parties[1]?.name ?? "Party B";
-  let body = tmpl.skeleton
+  const body = tmpl.skeleton
     .replaceAll("{{partyA}}", partyA)
     .replaceAll("{{partyB}}", partyB)
     .replaceAll("{{county}}", input.county || "New York")

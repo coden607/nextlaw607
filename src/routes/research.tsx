@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input, Label, Textarea } from "@/components/ui/input";
 import { fetchNyStatute, searchOpinions } from "@/lib/courtlistener";
 import { searchCorpus } from "@/lib/corpus";
+import { PUBLIC_LEGAL_SOURCES, PUBLIC_SOURCE_KIND_LABEL } from "@/lib/public-sources";
 import type { ResearchHit } from "@/lib/types";
 
 type ResearchSearch = { q?: string };
@@ -85,6 +86,52 @@ function Research() {
       {count != null ? (
         <p className="font-mono text-xs text-subtle">{count.toLocaleString()} hits · NY / AD / Supreme / 2d Cir.</p>
       ) : null}
+
+      <section className="rounded-xl border border-border bg-surface p-5">
+        <div className="flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <h2 className="font-display text-xl">Public source desk</h2>
+            <p className="mt-1 max-w-2xl text-sm text-muted">
+              Official court and statute links help people find the source. Self-help and
+              secondary pages are orientation only; they never become verified authority.
+            </p>
+          </div>
+          <Badge>Provenance required</Badge>
+        </div>
+        <ul className="mt-4 grid gap-3 md:grid-cols-2">
+          {PUBLIC_LEGAL_SOURCES.map((source) => (
+            <li key={source.id} className="rounded-lg border border-border p-4">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <a
+                  href={source.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="font-display text-base text-fg hover:text-accent"
+                >
+                  {source.name}
+                </a>
+                <Badge>{PUBLIC_SOURCE_KIND_LABEL[source.kind]}</Badge>
+              </div>
+              <p className="mt-2 text-sm leading-normal text-muted">{source.description}</p>
+              <div className="mt-3 flex flex-wrap gap-3 text-xs">
+                {source.searchUrl ? (
+                  <a
+                    href={source.searchUrl(q)}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-accent underline-offset-4 hover:underline"
+                  >
+                    Search for current query
+                  </a>
+                ) : null}
+                <span className="text-subtle">
+                  {source.mayCite ? "Candidate source; verify full text" : "Do not cite as verified authority"}
+                </span>
+              </div>
+            </li>
+          ))}
+        </ul>
+      </section>
 
       <div className="grid gap-6 lg:grid-cols-2">
         <section>
