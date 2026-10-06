@@ -13,7 +13,10 @@ node_modules/
 screenshots/
 artifacts/
 tmp/
-.grok/
+.grok/*
+!.grok/app-env.json
+!.grok/skills/
+!.grok/skills/**
 *.log
 .output/
 routeTree.gen.ts
