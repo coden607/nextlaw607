@@ -18,9 +18,12 @@
  * compare against unless the app is made to emit one.
  *
  * `scripts/browser-smoke.mjs` runs the comparison on every smoke; run it
- * standalone against a live dev server with `npm run check:auth` (exit 0 agree,
- * 1 diverged, 2 could not observe). Callers comparing the flag should use
- * `compareAuthInvariant()` rather than re-deriving it.
+ * standalone with `npm run check:auth` (exit 0 agree, 1 diverged,
+ * 2 could not observe). When no dev server answers the probe, the command
+ * boots one, waits for `/__app-env`, and tears it down afterwards — so the
+ * gate also works where nothing is listening yet (a fresh CI job). Callers
+ * comparing the flag should use `compareAuthInvariant()` rather than
+ * re-deriving it.
  */
 import { APP_ENV_ROUTE } from "./app-env-plugin.mjs";
 import { isMainModule, mergeAppEnv, projectRoot, readAppEnv } from "./with-app-env.mjs";
@@ -89,11 +92,54 @@ export function buildAuthEnabled(root = projectRoot(), processEnv = process.env)
   return authEnabledFromEnvValue(env.VITE_AUTH_ENABLED);
 }
 
+/**
+ * Probe the dev server, booting a short-lived one when nothing answers. CI
+ * runs this command on a fresh checkout where no server is listening; the
+ * gate's whole point is comparing resolutions, so it brings its own dev
+ * server up rather than declaring the run unobservable.
+ */
+async function probeWithFallbackServer(devUrl) {
+  const running = await probeDevAuthEnabled(devUrl);
+  if (running !== null) return { devAuthEnabled: running, booted: false };
+
+  const { spawn } = await import("node:child_process");
+  const child = spawn("npm", ["run", "dev"], {
+    cwd: projectRoot(),
+    stdio: "ignore",
+    // Own process group so the kill below takes the vite grandchild too.
+    detached: process.platform !== "win32",
+  });
+  try {
+    const deadline = Date.now() + 120_000;
+    while (Date.now() < deadline && child.exitCode === null) {
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      const observed = await probeDevAuthEnabled(devUrl);
+      if (observed !== null) return { devAuthEnabled: observed, booted: true };
+    }
+    return { devAuthEnabled: null, booted: true };
+  } finally {
+    try {
+      if (process.platform !== "win32") process.kill(-child.pid, "SIGTERM");
+      else child.kill("SIGTERM");
+    } catch {
+      /* already gone */
+    }
+  }
+}
+
 async function main(argv) {
   const devUrlFlag = argv.indexOf("--dev-url");
   const devUrl = devUrlFlag === -1 ? DEFAULT_DEV_URL : argv[devUrlFlag + 1];
+  const probe = await probeWithFallbackServer(devUrl);
+  if (probe.booted) {
+    console.error(
+      probe.devAuthEnabled === null
+        ? "[auth-invariant] started a dev server for the probe but it never became ready"
+        : "[auth-invariant] no dev server was running; started one for the probe",
+    );
+  }
   const result = compareAuthInvariant({
-    devAuthEnabled: await probeDevAuthEnabled(devUrl),
+    devAuthEnabled: probe.devAuthEnabled,
     buildAuthEnabled: buildAuthEnabled(),
   });
   if (result.status === "ok") {
