@@ -10,3 +10,7 @@ never invent legal authority. Use:
 `DISCOVER -> UNDERSTAND -> PLAN -> IMPLEMENT -> TEST -> REVIEW -> VERIFY`
 
 Do not claim a fix, security property, or legal conclusion without evidence.
+
+## Shared agent skills
+
+Read and follow `AGENTS.md` before planning, editing, testing or committing. Use the complete canonical https://github.com/coden607/skills library under its shared-skills policy.
