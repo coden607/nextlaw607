@@ -15,3 +15,7 @@ claim that a change is tested, secure, or production-ready.
 
 Before completion, run the narrowest relevant checks and then the repository
 gates documented in `TESTING.md` and `VERIFICATION-GATES.md`.
+
+## Shared agent skills
+
+Read and follow the repository root `AGENTS.md`. Use the complete canonical https://github.com/coden607/skills library under its shared-skills policy.
