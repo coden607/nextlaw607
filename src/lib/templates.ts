@@ -321,6 +321,152 @@ Any plea must (a) match the allocution to the mental state, (b) preserve 30.30 i
 
 {{signatureBlock}}`,
   },
+  {
+    id: "criminal-retention",
+    name: "Criminal Defense Engagement Letter",
+    practice: "criminal",
+    summary:
+      "Defense engagement letter with scope-of-representation limits, fee-structure placeholder, investigation budget line, and client-duty recitals. Not a plea, not a guarantee.",
+    requiredStatutes: ["cpl-30-30", "cpl-245-20", "pl-10-00"],
+    requiredCases: ["people-bay", "miranda-arizona"],
+    skeleton: `CRIMINAL DEFENSE ENGAGEMENT LETTER
+
+{{partyA}} ("Counsel") agrees to represent {{partyB}} ("Client") in the criminal matter pending in {{county}} County, New York, as of {{effectiveDate}}.
+
+1. SCOPE OF REPRESENTATION
+1.1 Counsel is retained to represent Client through disposition of the charges described in the accusatory instrument presently filed, including all pretrial motions and hearings, discovery practice under CPL Article 245, and negotiation of any disposition.
+1.2 Scope of representation: {{purpose}}
+1.3 This engagement does NOT include: representation at trial after a plea-withdrawal or dismissal without prejudice and re-file; appellate proceedings (CPL Articles 450/470); post-conviction motions (CPL 440.10/440.20); administrative or collateral matters (immigration, family, parole, probation revocation); or representation of any co-defendant. Any of those require a new written engagement.
+1.4 Counsel makes no promise or prediction about the outcome. A dismissal, an acquittal, a particular sentence, or a particular plea disposition cannot be guaranteed.
+
+2. FEES AND COSTS
+2.1 Fee structure: {{fees}}
+2.2 The fee is earned upon receipt and is not refundable except as required by the Rules of Professional Conduct (22 NYCRR 1200.0) or as a court may order.
+2.3 Investigation budget: {{services}}. Costs of investigation (investigator fees, expert witnesses, transcripts, medical or forensic testing) are billed separately and require Client's written authorization before any single expenditure exceeding the line item.
+2.4 Client acknowledges that counsel's continued representation depends upon Client's timely satisfaction of the fee arrangement described above.
+
+3. CLIENT DUTIES
+3.1 Client shall: (a) provide complete and truthful information; (b) appear at every scheduled court date; (c) maintain contact with Counsel and promptly notify Counsel of any change of address, phone, or employment; (d) not discuss the facts of the case with anyone other than Counsel; (e) preserve all documents, messages, and recordings potentially relevant to the defense.
+3.2 Client understands that CPL 30.30 speedy-trial rights and CPL Article 245 discovery rights are strategic matters for Counsel to manage, and Client shall not communicate with the District Attorney, law enforcement, or any witness without Counsel's knowledge.
+
+4. CONFIDENTIALITY AND WORK PRODUCT
+4.1 Communications are protected by the attorney-client privilege. Counsel's work product is protected. Client should not forward, screenshot, or summarize Counsel's advice.
+
+5. TERMINATION
+5.1 Either party may terminate this engagement in writing. If Client terminates, Client remains responsible for fees and costs accrued through the date of termination, and Counsel will seek leave of court to withdraw where required.
+5.2 Term: {{term}}
+
+6. ACKNOWLEDGMENT
+6.1 Client acknowledges reading this letter, understanding its terms, and receiving a copy. Client has had the opportunity to consult independent counsel about this engagement.
+
+{{signatureBlock}}`,
+  },
+  {
+    id: "mitigation-memo",
+    name: "Sentencing Mitigation Memo",
+    practice: "criminal",
+    summary:
+      "Sentencing mitigation skeleton — client history, treatment, restitution, and statutory mitigation/youthful-offender placeholders. Attorney work product.",
+    requiredStatutes: ["cpl-30-30", "pl-10-00", "pl-15-05"],
+    requiredCases: ["people-goetz", "brady-maryland"],
+    skeleton: `SENTENCING MITIGATION MEMORANDUM — ATTORNEY WORK PRODUCT
+CONFIDENTIAL — PREPARED IN CONNECTION WITH SENTENCING
+
+People v. {{partyB}}
+County: {{county}}    Docket/Index: {{indexNo}}    Sentencing date: {{effectiveDate}}
+
+I. INTRODUCTION
+This memorandum is submitted on behalf of defendant {{partyB}} in advance of sentencing. It is attorney work product prepared for the Court and the People and is not for public distribution.
+
+II. STATEMENT OF FACTS
+Case synopsis: {{dispute}}
+
+III. CLIENT HISTORY AND BACKGROUND
+A. Personal history: [AGE, FAMILY, EDUCATION, EMPLOYMENT, MILITARY SERVICE]
+B. Criminal history: [PRIOR CONVICTIONS, YOUTHFUL OFFENDER ADJUDICATIONS, PAROLE/PROBATION STATUS]
+C. Health and mental-health history: [DIAGNOSES, TREATMENT, MEDICATION, SUBSTANCE-USE HISTORY]
+
+IV. MITIGATION ARGUMENT
+A. Nature and circumstances of the offense: [CONTEXT, ROLE, DEGREE OF INVOLVEMENT, ABSENCE OF VIOLENCE]
+B. Client's history and character: [EMPLOYMENT, FAMILY OBLIGATIONS, COMMUNITY TIES, REMORSE]
+C. Treatment and rehabilitation: [COMPLETED OR PROPOSED PROGRAMS — INPATIENT, OUTPATIENT, COUNSELING, EDUCATION]
+D. Restitution: [AMOUNT PAID, PAYMENT PLAN, VICTIM IMPACT STATEMENT RESPONSE]
+
+V. STATUTORY MITIGATION FACTORS
+A. Youthful-offender eligibility: [ASSESS UNDER CPL ART. 720 — AGE AT OFFENSE, CLASS OF FELONY, CRIMINAL HISTORY]
+B. Mitigation under the Penal Law sentencing scheme: [PL 60.00–60.12 FACTORS AS APPLICABLE]
+C. Alternatives to incarceration: [PROBATION, INTERVENTION COURT, SHOCK, WORK RELEASE, PROGRAM PLACEMENT]
+
+VI. SENTENCING RECOMMENDATION
+Counsel respectfully requests: [SPECIFIC SENTENCE, STRUCTURE, CONCURRENT VS. CONSECUTIVE, CONDITIONS]
+
+VII. CONCLUSION
+[SUMMARY PARAGRAPH]
+
+Respectfully submitted,
+
+{{signatureBlock}}`,
+  },
+  {
+    id: "suppression-brief",
+    name: "Motion to Suppress (CPL 710)",
+    practice: "criminal",
+    summary:
+      "Motion-to-suppress skeleton with stop/search/seizure fact placeholders, standing section, and fruit-of-the-poisonous-tree paragraphs.",
+    requiredStatutes: ["cpl-710-20", "cpl-140-20", "cpl-30-30"],
+    requiredCases: ["mapp-ohio", "terry-ohio", "miranda-arizona", "dunaway-ny", "wong-sun", "people-huntley"],
+    skeleton: `SUPREME COURT OF THE STATE OF NEW YORK
+COUNTY OF {{county}}
+
+THE PEOPLE OF THE STATE OF NEW YORK,
+                                    Plaintiff,
+          -against-                              Ind. No. {{indexNo}}
+
+{{partyB}},
+                                    Defendant.
+
+MOTION TO SUPPRESS PHYSICAL EVIDENCE AND STATEMENTS
+(CPL 710.20, 710.40)
+
+Defendant {{partyB}}, by counsel, respectfully moves this Court for an order suppressing (i) all physical evidence seized by law enforcement, and (ii) all statements attributed to defendant, on the grounds that they were obtained in violation of defendant's rights under the Fourth Amendment to the United States Constitution, Article I, § 12 of the New York Constitution, and CPL 710.20.
+
+PRELIMINARY STATEMENT
+The facts: {{dispute}}
+
+I. STANDING
+Defendant has automatic standing to challenge the search and seizure of his/her own person, clothing, and personal effects. Defendant also has a reasonable expectation of privacy in [RESIDENCE, VEHICLE, BAG, PHONE]. See Mapp v. Ohio, 367 U.S. 643 (1961) (exclusionary rule applies to the states).
+
+II. THE STOP WAS UNREASONABLE UNDER TERRY
+[IF APPLICABLE — DESCRIBE THE ENCOUNTER: APPROACH, SHOW OF FORCE, DURATION, WHETHER THE DEFENDANT WAS FREE TO LEAVE]
+A. Terry v. Ohio, 392 U.S. 1 (1968) permits a brief investigatory stop only upon reasonable suspicion supported by specific, articulable facts.
+B. [ANALYZE WHETHER THE OFFICER'S OBSERVATIONS AMOUNT TO REASONABLE SUSPicion OR MERE INNUENDO]
+
+III. THE SEARCH EXCEEDED THE SCOPE OF ANY CONSENT OR WARRANT
+[IF CONSENT: DESCRIBE THE REQUEST, WHETHER CONSENT WAS VOLUNTARY, SCOPE, AND WHETHER THE SEARCH EXCEEDED IT]
+[IF WARRANT: ATTACK THE AFFIDAVIT — STALENESS, LACK OF PROBABLE CAUSE, PARTICULARITY, EXECUTION BEYOND SCOPE]
+
+IV. THE ARREST LACKED PROBABLE CAUSE
+CPL 140.20 authorizes a warrantless arrest only when the officer has reasonable cause to believe the person committed a crime. [DESCRIBE WHY THE FACTS DO OR DO NOT ESTABLISH PROBABLE CAUSE.]
+Dunaway v. New York, 442 U.S. 200 (1979) (custodial transportation and interrogation on less than probable cause violates the Fourth Amendment).
+
+V. STATEMENTS WERE TAKEN IN VIOLATION OF MIRANDA AND HUNTLEY
+Defendant was [IN CUSTODY / NOT FREE TO LEAVE] when questioned. Miranda v. Arizona, 384 U.S. 436 (1966) requires warnings prior to custodial interrogation. People v. Huntley (N.Y.) provides the state-law mechanism for suppression of involuntary statements. [DESCRIBE THE CIRCUMSTANCES: WHERE, WHEN, WHETHER WARNINGS WERE GIVEN, WHETHER THE DEFENDANT INVOKED.] [IF APPLICABLE — DESCRIBE WHETHER THE STATEMENT WAS THE PRODUCT OF AN ILLEGAL ARREST OR SEARCH.]
+
+VI. FRUIT OF THE POISONOUS TREE
+All evidence derived from the unlawful stop, search, or arrest is subject to suppression as fruit of the poisonous tree. Wong Sun v. United States, 371 U.S. 471 (1963). [DESCRIBE THE DERIVATIVE EVIDENCE: PHYSICAL ITEMS, IDENTIFICATIONS, SECONDARY STATEMENTS.] The attenuation doctrine does not apply because [DESCRIBE WHY THE TAINT REMAINS: TEMPORAL PROXIMITY, ABSENCE OF INTERVENING CIRCUMSTANCES, FLAGRANT MISCONDUCT].
+
+VII. RELIEF REQUESTED
+WHEREFORE, defendant respectfully requests that this Court:
+(a) suppress all physical evidence seized in violation of defendant's rights;
+(b) suppress all statements attributed to defendant;
+(c) suppress all identifications and derivative evidence;
+(d) grant a Huntley/Mapp/Dunaway hearing as applicable; and
+(e) grant such other relief as the Court deems just.
+
+Dated: {{effectiveDate}}
+
+{{signatureBlock}}`,
+  },
 ];
 
 export function templateById(id: string) {
