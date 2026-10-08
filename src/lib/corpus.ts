@@ -5,6 +5,8 @@ import type { CaseDoc, Citation, StatuteDoc } from "./types";
  * that is not in this bank or returned live from CourtListener / NY Senate.
  * Blackletter is a working paraphrase of operative text — always link the
  * official statute page before relying on it in a signed instrument.
+ *
+ * ATTORNEY MUST VERIFY ALL CITATIONS — corpus is research scaffold, not authority.
  */
 export const STATUTES: StatuteDoc[] = [
   {
@@ -294,6 +296,175 @@ export const STATUTES: StatuteDoc[] = [
     practice: ["contracts"],
   },
   {
+    id: "pl-120-00",
+    lawId: "PEN",
+    section: "Art. 120",
+    title: "Assault and related offenses",
+    chapter: "Penal Law",
+    blackletter:
+      "Defines assault in the third, second, and first degrees (PL 120.00–120.10), menacing, reckless endangerment, and related offenses. Grading turns on intent to cause physical injury, serious physical injury, use of a dangerous instrument, and injury to specified victims.",
+    practiceNotes:
+      "Start every assault charge grid with the PL 10.00 definitions (physical injury vs. serious physical injury) and the culpable mental state. Vehicular assault lives in Article 120 as well.",
+    officialUrl: "https://www.nysenate.gov/legislation/laws/PEN/120.00",
+    practice: ["criminal"],
+  },
+  {
+    id: "pl-125-00",
+    lawId: "PEN",
+    section: "Art. 125",
+    title: "Homicide offenses",
+    chapter: "Penal Law",
+    blackletter:
+      "Defines criminally negligent homicide, manslaughter in the second and first degrees, murder in the second and first degrees, and abortion-related offenses. Murder second degree (PL 125.25) is the baseline homicide charge; intent, depraved indifference, and felony murder are distinct theories.",
+    practiceNotes:
+      "Charge-grid every homicide count separately and force the People to commit to a theory early — intent, depraved mind, or felony murder — because the proof for each diverges.",
+    officialUrl: "https://www.nysenate.gov/legislation/laws/PEN/125.25",
+    practice: ["criminal"],
+  },
+  {
+    id: "pl-130-00",
+    lawId: "PEN",
+    section: "Art. 130",
+    title: "Sex offenses",
+    chapter: "Penal Law",
+    blackletter:
+      "Defines sexual misconduct, rape, sodomy, sexual abuse, and predatory sexual assault. Grading turns on lack of consent, age of the victim, forcible compulsion, incapacity, and the sexual-contact/sexual-act distinction.",
+    practiceNotes:
+      "Sex-offense work is SORA-exposure work. Map the accusatory instrument to the SORA risk-level statute before any plea conversation. Crawford confrontation issues are routine here.",
+    officialUrl: "https://www.nysenate.gov/legislation/laws/PEN/130.25",
+    practice: ["criminal"],
+  },
+  {
+    id: "pl-140-00",
+    lawId: "PEN",
+    section: "Art. 140",
+    title: "Burglary and related offenses",
+    chapter: "Penal Law",
+    blackletter:
+      "Defines burglary in the third, second, and first degrees (PL 140.20–140.30), criminal trespass, and possession of burglar's tools. Grading turns on dwelling vs. non-dwelling, whether a weapon is possessed, and injury to a non-participant.",
+    practiceNotes:
+      "The dwelling element is a common attack surface: was the structure a dwelling at the time of entry? Criminal trespass is the lesser-included fallback.",
+    officialUrl: "https://www.nysenate.gov/legislation/laws/PEN/140.20",
+    practice: ["criminal"],
+  },
+  {
+    id: "pl-155-00",
+    lawId: "PEN",
+    section: "Art. 155",
+    title: "Larceny",
+    chapter: "Penal Law",
+    blackletter:
+      "Consolidates larceny by trespassory taking, by trick, by embezzlement, by false pretenses, by possession of lost property, and by issuing a bad check. Grading by dollar threshold: $1,000 / $3,000 / $50,000 / $1,000,000.",
+    practiceNotes:
+      "Grand-larceny grade turns on the property valuation. Challenge the People's valuation early with competing appraisals when the threshold matters.",
+    officialUrl: "https://www.nysenate.gov/legislation/laws/PEN/155.25",
+    practice: ["criminal"],
+  },
+  {
+    id: "pl-160-00",
+    lawId: "PEN",
+    section: "Art. 160",
+    title: "Robbery",
+    chapter: "Penal Law",
+    blackletter:
+      "Defines robbery in the third, second, and first degrees (PL 160.05–160.15). Robbery is larceny by force or threat of immediate physical injury. Grading turns on accomplice display of a firearm, physical injury, and whether the victim is a non-participant.",
+    practiceNotes:
+      "Force-vs.-larceny timing is the classic defense: if the taking was complete before force was applied, the robbery count fails and the case falls to larceny + assault.",
+    officialUrl: "https://www.nysenate.gov/legislation/laws/PEN/160.05",
+    practice: ["criminal"],
+  },
+  {
+    id: "pl-220-00",
+    lawId: "PEN",
+    section: "Art. 220",
+    title: "Controlled substances offenses",
+    chapter: "Penal Law",
+    blackletter:
+      "Defines criminal possession and sale of controlled substances, graded by substance, weight, and intent to sell. Marihuana offenses were largely removed from Article 220 by the Marihuana Regulation and Taxation Act (2021) except for sale to minors and concentrated-cannabis weights.",
+    practiceNotes:
+      "Weight is everything: lab analysis and chain-of-custody attacks are standard. Constructive possession in multi-occupant vehicles is a fact-heavy fight worth having.",
+    officialUrl: "https://www.nysenate.gov/legislation/laws/PEN/220.06",
+    practice: ["criminal"],
+  },
+  {
+    id: "pl-265-00",
+    lawId: "PEN",
+    section: "Art. 265",
+    title: "Firearms and other dangerous weapons",
+    chapter: "Penal Law",
+    blackletter:
+      "Defines criminal possession of a weapon in the fourth, third, second, and first degrees. CPW 2 (PL 265.03) — possession of a loaded firearm outside the home or place of business — is a class C violent felony.",
+    practiceNotes:
+      "Suppression of the weapon is usually the whole case: running a CPL 710 challenge on the stop and frisk is mandatory, not optional. Bail eligibility changed materially with 2019 reform.",
+    officialUrl: "https://www.nysenate.gov/legislation/laws/PEN/265.03",
+    practice: ["criminal"],
+  },
+  {
+    id: "cpl-140-20",
+    lawId: "CPL",
+    section: "140.20",
+    title: "Arrest without a warrant; by police officer",
+    chapter: "Criminal Procedure Law",
+    blackletter:
+      "A police officer may arrest a person for an offense when the officer has reasonable cause to believe that person committed it, or in the circumstances enumerated in the section. The arresting officer must bring the arrested person before the local criminal court without unnecessary delay.",
+    practiceNotes:
+      "Probable-cause review starts here. If the facts supporting the arrest do not add to reasonable cause, every downstream statement and seizure is vulnerable.",
+    officialUrl: "https://www.nysenate.gov/legislation/laws/CPL/140.20",
+    practice: ["criminal"],
+  },
+  {
+    id: "cpl-710-20",
+    lawId: "CPL",
+    section: "710.20",
+    title: "Grounds for suppression of evidence",
+    chapter: "Criminal Procedure Law",
+    blackletter:
+      "Evidence must be suppressed when it is obtained by a search and seizure in violation of the defendant's constitutional rights, including the Fourth Amendment (applied to the states through the Fourteenth Amendment) and Article I, Section 12 of the New York Constitution.",
+    practiceNotes:
+      "The statutory hook for every Mapp/Dunaway/Terry challenge. Plead the specific ground: unlawful stop, unlawful search, unlawful arrest, involuntary statement, or tainted identification.",
+    officialUrl: "https://www.nysenate.gov/legislation/laws/CPL/710.20",
+    practice: ["criminal"],
+  },
+  {
+    id: "cpl-710-40",
+    lawId: "CPL",
+    section: "710.40",
+    title: "Motions to suppress; procedure",
+    chapter: "Criminal Procedure Law",
+    blackletter:
+      "A motion to suppress must be made within constitutional and statutory time limits, must state the legal ground and the facts supporting it, and is typically resolved after a suppression hearing at which the People bear the burden of going forward.",
+    practiceNotes:
+      "Do not sleep on the motion deadline. Mapp/Dunaway/Huntley/Wade hearings are fact-finding opportunities — subpoena the officers and body-worn camera footage early.",
+    officialUrl: "https://www.nysenate.gov/legislation/laws/CPL/710.40",
+    practice: ["criminal"],
+  },
+  {
+    id: "cpl-450-10",
+    lawId: "CPL",
+    section: "450.10",
+    title: "Appeals to the court of appeals; as of right",
+    chapter: "Criminal Procedure Law",
+    blackletter:
+      "Defines the limited circumstances in which a criminal appeal lies to the New York Court of Appeals as of right, including where there is a divided Appellate Division order or a constitutional question directly involved.",
+    practiceNotes:
+      "Preservation is the whole game below: objections on the record at every stage or the Court of Appeals will not reach the issue. Motions in limine and mid-trial objections should be re-argued at the appropriate stage.",
+    officialUrl: "https://www.nysenate.gov/legislation/laws/CPL/450.10",
+    practice: ["criminal"],
+  },
+  {
+    id: "cpl-470-05",
+    lawId: "CPL",
+    section: "470.05",
+    title: "Appeals to intermediate appellate courts; as of right",
+    chapter: "Criminal Procedure Law",
+    blackletter:
+      "An appeal to the Appellate Division lies as of right from a judgment of conviction and, in limited circumstances, from other orders. The appeal must be taken within the time prescribed by the CPL.",
+    practiceNotes:
+      "Notice of appeal deadline is jurisdictional — calendar it on day one of sentencing. Raise every preservation point in the Appellate Division even if the Court of Appeals is the real target.",
+    officialUrl: "https://www.nysenate.gov/legislation/laws/CPL/470.05",
+    practice: ["criminal"],
+  },
+  {
     id: "ucc-2-201",
     lawId: "UCC",
     section: "2-201",
@@ -499,6 +670,114 @@ export const CASES: CaseDoc[] = [
       "The People's certificate of compliance under CPL Art. 245 must be filed in good faith after exercising due diligence. An invalid COC does not stop the 30.30 clock. Discovery readiness is now a speedy-trial fact.",
     officialUrl: "https://www.courtlistener.com/?q=People+v+Bay+41+NY3d+200",
     statutes: ["cpl-30-30", "cpl-245-20"],
+    practice: ["criminal"],
+  },
+  {
+    id: "mapp-ohio",
+    name: "Mapp v. Ohio",
+    bluebook: "Mapp v. Ohio, 367 U.S. 643 (1961)",
+    court: "U.S. Supreme Court",
+    year: 1961,
+    holding:
+      "The exclusionary rule applies to the states through the Fourteenth Amendment. Evidence obtained by an unconstitutional search and seizure is inadmissible in state criminal proceedings.",
+    officialUrl: "https://www.courtlistener.com/?q=Mapp+v+Ohio+367+US+643",
+    statutes: ["cpl-710-20"],
+    practice: ["criminal"],
+  },
+  {
+    id: "miranda-arizona",
+    name: "Miranda v. Arizona",
+    bluebook: "Miranda v. Arizona, 384 U.S. 436 (1966)",
+    court: "U.S. Supreme Court",
+    year: 1966,
+    holding:
+      "Statements obtained during custodial interrogation are inadmissible unless the defendant was first advised of the right to remain silent and to counsel, and knowingly, intelligently, and voluntarily waived those rights.",
+    officialUrl: "https://www.courtlistener.com/?q=Miranda+v+Arizona+384+US+436",
+    statutes: ["cpl-710-20"],
+    practice: ["criminal"],
+  },
+  {
+    id: "terry-ohio",
+    name: "Terry v. Ohio",
+    bluebook: "Terry v. Ohio, 392 U.S. 1 (1968)",
+    court: "U.S. Supreme Court",
+    year: 1968,
+    holding:
+      "A brief investigatory stop requires reasonable suspicion supported by specific, articulable facts that criminal activity is afoot. A limited frisk for weapons requires a reasonable belief that the person is armed and dangerous.",
+    officialUrl: "https://www.courtlistener.com/?q=Terry+v+Ohio+392+US+1",
+    statutes: ["cpl-710-20", "cpl-140-20"],
+    practice: ["criminal"],
+  },
+  {
+    id: "dunaway-ny",
+    name: "Dunaway v. New York",
+    bluebook: "Dunaway v. New York, 442 U.S. 200 (1979)",
+    court: "U.S. Supreme Court",
+    year: 1979,
+    holding:
+      "Taking a suspect into custody and transporting him to the stationhouse for interrogation on less than probable cause violates the Fourth Amendment. Statements obtained as a result are subject to suppression.",
+    officialUrl: "https://www.courtlistener.com/?q=Dunaway+v+New+York+442+US+200",
+    statutes: ["cpl-710-20", "cpl-140-20"],
+    practice: ["criminal"],
+  },
+  {
+    id: "wong-sun",
+    name: "Wong Sun v. United States",
+    bluebook: "Wong Sun v. United States, 371 U.S. 471 (1963)",
+    court: "U.S. Supreme Court",
+    year: 1963,
+    holding:
+      "Evidence derived from an unlawful search or arrest is subject to suppression as fruit of the poisonous tree unless the connection has become so attenuated as to dissipate the taint.",
+    officialUrl: "https://www.courtlistener.com/?q=Wong+Sun+v+United+States+371+US+471",
+    statutes: ["cpl-710-20"],
+    practice: ["criminal"],
+  },
+  {
+    id: "brady-maryland",
+    name: "Brady v. Maryland",
+    bluebook: "Brady v. Maryland, 373 U.S. 83 (1963)",
+    court: "U.S. Supreme Court",
+    year: 1963,
+    holding:
+      "Suppression by the prosecution of evidence favorable to the accused violates due process when the evidence is material to guilt or punishment, irrespective of the prosecution's good or bad faith.",
+    officialUrl: "https://www.courtlistener.com/?q=Brady+v+Maryland+373+US+83",
+    statutes: ["cpl-245-20"],
+    practice: ["criminal"],
+  },
+  {
+    id: "batson-kentucky",
+    name: "Batson v. Kentucky",
+    bluebook: "Batson v. Kentucky, 476 U.S. 79 (1986)",
+    court: "U.S. Supreme Court",
+    year: 1986,
+    holding:
+      "A prosecutor's use of peremptory challenges to exclude jurors on the basis of race violates the Equal Protection Clause. The defendant must establish a prima facie case of discrimination; the prosecutor must then offer a race-neutral explanation.",
+    officialUrl: "https://www.courtlistener.com/?q=Batson+v+Kentucky+476+US+79",
+    statutes: [],
+    practice: ["criminal"],
+  },
+  {
+    id: "crawford-washington",
+    name: "Crawford v. Washington",
+    bluebook: "Crawford v. Washington, 541 U.S. 36 (2004)",
+    court: "U.S. Supreme Court",
+    year: 2004,
+    holding:
+      "The Confrontation Clause bars admission of out-of-court testimonial statements unless the declarant is unavailable and the defendant had a prior opportunity for cross-examination.",
+    officialUrl: "https://www.courtlistener.com/?q=Crawford+v+Washington+541+US+36",
+    statutes: [],
+    practice: ["criminal"],
+  },
+  {
+    id: "people-huntley",
+    name: "People v. Huntley",
+    bluebook: "People v. Huntley, 15 N.Y.2d 72 (1965)",
+    court: "N.Y. Court of Appeals",
+    year: 1965,
+    holding:
+      "A defendant is entitled to a pre-trial hearing on the voluntariness of statements attributed to him. The People bear the burden of showing beyond a reasonable doubt that the statement was voluntarily made. This is the state-law mechanism for challenging confessions and admissions in New York practice.",
+    officialUrl: "https://www.courtlistener.com/?q=People+v+Huntley+15+NY2d+72",
+    statutes: ["cpl-710-20"],
     practice: ["criminal"],
   },
 ];
