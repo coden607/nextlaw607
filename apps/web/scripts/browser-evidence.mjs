@@ -24,7 +24,9 @@ await page.addInitScript(() => {
     new PerformanceObserver(list => {
       for (const entry of list.getEntries()) window.__nextlawVitals.inp_ms = Math.max(window.__nextlawVitals.inp_ms, entry.duration || 0);
     }).observe({ type: "event", buffered: true, durationThreshold: 0 });
-  } catch {}
+  } catch {
+    // INP observation unsupported in this browser; vitals degrade gracefully.
+  }
 });
 
 const consoleErrors = [];
