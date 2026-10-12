@@ -1,6 +1,6 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
-import { TEMPLATES, templateById } from "./templates.ts";
+import { templateById } from "./templates.ts";
 import { PRACTICE_LABEL } from "./types.ts";
 import { STATUTES, CASES, statuteById, caseById } from "./corpus.ts";
 

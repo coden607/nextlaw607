@@ -1,4 +1,4 @@
-import type { CaseDoc, Citation, StatuteDoc } from "./types";
+import type { CaseDoc, Citation, ContractTemplate, StatuteDoc } from "./types";
 
 /**
  * Verified New York authority bank. Critic Agent will reject any citation
@@ -815,34 +815,54 @@ export function searchCorpus(q: string): { statutes: StatuteDoc[]; cases: CaseDo
   };
 }
 
+function statuteCitation(s: StatuteDoc): Citation {
+  return {
+    id: s.id,
+    kind: "statute",
+    bluebook: `${s.chapter} § ${s.section}`,
+    url: s.officialUrl,
+    verified: true,
+    source: "corpus",
+    holding: s.blackletter,
+  };
+}
+
+function caseCitation(c: CaseDoc): Citation {
+  return {
+    id: c.id,
+    kind: "case",
+    bluebook: c.bluebook,
+    court: c.court,
+    year: c.year,
+    url: c.officialUrl,
+    verified: true,
+    source: "corpus",
+    holding: c.holding,
+  };
+}
+
 export function citationsForPractice(practice: string): Citation[] {
-  const statutes = STATUTES.filter((s) => s.practice.includes(practice as never));
-  const cases = CASES.filter((c) => c.practice.includes(practice as never));
   return [
-    ...statutes.map(
-      (s): Citation => ({
-        id: s.id,
-        kind: "statute",
-        bluebook: `${s.chapter} § ${s.section}`,
-        url: s.officialUrl,
-        verified: true,
-        source: "corpus",
-        holding: s.blackletter,
-      }),
-    ),
-    ...cases.map(
-      (c): Citation => ({
-        id: c.id,
-        kind: "case",
-        bluebook: c.bluebook,
-        court: c.court,
-        year: c.year,
-        url: c.officialUrl,
-        verified: true,
-        source: "corpus",
-        holding: c.holding,
-      }),
-    ),
+    ...STATUTES.filter((s) => s.practice.includes(practice as never)).map(statuteCitation),
+    ...CASES.filter((c) => c.practice.includes(practice as never)).map(caseCitation),
+  ];
+}
+
+/**
+ * Provenance for a template's wired-in authority: the exact required statutes
+ * and cases the instrument skeleton cites, as verified-bank citations. Used
+ * when a draft is produced offline so the work product records its sources.
+ */
+export function corpusCitationsForTemplate(tmpl: ContractTemplate): Citation[] {
+  return [
+    ...tmpl.requiredStatutes
+      .map((id) => statuteById(id))
+      .filter((s): s is StatuteDoc => Boolean(s))
+      .map(statuteCitation),
+    ...tmpl.requiredCases
+      .map((id) => caseById(id))
+      .filter((c): c is CaseDoc => Boolean(c))
+      .map(caseCitation),
   ];
 }
 
