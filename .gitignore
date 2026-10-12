@@ -1,7 +1,8 @@
 .env
 .env.*
 !.env.example
-.continuity/
+.continuity/*
+!.continuity/verification.json
 .venv/
 __pycache__/
 *.py[cod]

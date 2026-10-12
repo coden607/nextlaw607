@@ -1,0 +1,30 @@
+name: OpenTelemetry live export smoke
+
+on:
+  pull_request:
+  push:
+    branches:
+      - feat/2026-production-stack
+
+permissions:
+  contents: read
+
+jobs:
+  otlp-live-export:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install observability runtime
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e '.[observability]' pytest
+      - name: Export sanitized trace to controlled OTLP receiver
+        env:
+          PYTHONPATH: src
+        run: pytest -q compat/test_opentelemetry_live_export.py

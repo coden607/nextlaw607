@@ -1,0 +1,32 @@
+[
+  {
+    "id": "home-entry-no-warrant-consent-exigency",
+    "input": {"home_entry": true},
+    "must_include": ["home_entry_authority", "requires verification"],
+    "must_not_include": ["definitely illegal", "guaranteed suppression"]
+  },
+  {
+    "id": "protective-sweep-and-plain-view",
+    "input": {"home_entry": true, "warrant": true, "protective_sweep": true, "plain_view_seizure": true},
+    "must_include": ["protective_sweep_scope", "plain_view_scope"],
+    "must_not_include": ["automatically suppressed"]
+  },
+  {
+    "id": "custodial-questioning-no-miranda",
+    "input": {"interrogation": true, "in_custody": true, "police_questioning": true, "miranda_given": false},
+    "must_include": ["miranda_issue", "verify miranda"],
+    "must_not_include": ["case dismissed"]
+  },
+  {
+    "id": "questioning-after-counsel-request",
+    "input": {"interrogation": true, "counsel_requested": true, "questioning_continued_after_counsel": true},
+    "must_include": ["post_counsel_questioning", "verify federal and new york"],
+    "must_not_include": ["guaranteed exclusion"]
+  },
+  {
+    "id": "identification-procedure",
+    "input": {"identification_procedure": true},
+    "must_include": ["identification_procedure", "suggestiveness"],
+    "must_not_include": ["identification is invalid"]
+  }
+]

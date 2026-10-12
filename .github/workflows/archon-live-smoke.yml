@@ -1,0 +1,36 @@
+name: Archon live smoke
+on:
+  workflow_dispatch:
+  pull_request:
+    branches:
+      - main
+permissions:
+  contents: read
+jobs:
+  validate-current-archon-harness:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout exact NextLaw revision
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - name: Checkout pinned current Archon harness engine
+        uses: actions/checkout@v4
+        with:
+          repository: coleam00/Archon
+          ref: 0add058814bdc5daf90f0b1fd16041eb437baefa
+          path: .archon-upstream
+          persist-credentials: false
+      - name: Setup Bun required by pinned Archon
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.2
+      - name: Install pinned Archon dependencies
+        working-directory: .archon-upstream
+        run: bun install --frozen-lockfile
+      - name: Confirm current harness-oriented Archon CLI
+        run: bun --cwd .archon-upstream run cli -- version
+      - name: Validate committed NextLaw workflow with current Archon
+        run: bun --cwd .archon-upstream run cli -- validate workflows --cwd "$GITHUB_WORKSPACE" --json

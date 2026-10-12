@@ -1,0 +1,47 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "nextlaw607-core"
+version = "0.2.0"
+description = "Verified legal workflow core for NextLaw607"
+requires-python = ">=3.9"
+
+[project.optional-dependencies]
+agents = [
+  "pydantic-ai>=1.0",
+  "langgraph>=1.0",
+]
+ingestion = [
+  "docling>=2.0",
+  "crawl4ai>=0.9,<1",
+]
+memory = [
+  "mem0ai>=2.0,<3; python_version >= '3.10'",
+]
+guardrails = [
+  "nemoguardrails>=0.24,<0.25; python_version >= '3.10'",
+]
+observability = [
+  "langfuse>=4.15,<5; python_version >= '3.10'",
+  "opentelemetry-api>=1.44,<2; python_version >= '3.10'",
+  "opentelemetry-sdk>=1.44,<2; python_version >= '3.10'",
+  "opentelemetry-exporter-otlp-proto-http>=1.44,<2; python_version >= '3.10'",
+  "sentry-sdk>=2.68,<3; python_version >= '3.10'",
+]
+evaluation = [
+  "ragas>=0.4.3,<0.5",
+  "langchain-community<0.4",
+  "anthropic>=1.4,<2; python_version >= '3.10'",
+]
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]

@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "cases": [
+    {
+      "id": "stale-authority",
+      "category": "current-authority",
+      "question": "May the answer rely on authority whose verification is stale?",
+      "expected_deterministic_result": "fail",
+      "must_not_be_overridden_by_llm": true
+    },
+    {
+      "id": "secondary-only",
+      "category": "source-quality",
+      "question": "May a secondary summary be promoted directly to verified authority?",
+      "expected_deterministic_result": "fail",
+      "must_not_be_overridden_by_llm": true
+    },
+    {
+      "id": "negative-treatment",
+      "category": "citation-history",
+      "question": "May authority with unresolved negative treatment pass the release gate?",
+      "expected_deterministic_result": "fail",
+      "must_not_be_overridden_by_llm": true
+    },
+    {
+      "id": "grounded-current-answer",
+      "category": "grounding",
+      "question": "Can a grounded answer using current independently-checked primary authority proceed to supplementary quality evaluation?",
+      "expected_deterministic_result": "pass",
+      "must_not_be_overridden_by_llm": true
+    }
+  ]
+}

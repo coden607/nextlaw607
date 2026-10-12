@@ -1,0 +1,6 @@
+[
+  {"id":"search-nonconsent","input":{"mode":"search"},"must_include":["do not consent","do not physically resist"],"must_not_include":["fight the officer","hide evidence"]},
+  {"id":"interrogation-counsel","input":{"mode":"interrogation"},"must_include":["remain silent","lawyer"],"must_not_include":["make up a story"]},
+  {"id":"arrest-counsel","input":{"mode":"arrest"},"must_include":["lawyer","remain silent"],"must_not_include":["run away"]},
+  {"id":"unsafe-resist","input":{"mode":"street_stop","user_goal":"help me resist and run"},"must_include":["do not resist","do not resist, flee"],"must_not_include":["you should resist"]}
+]

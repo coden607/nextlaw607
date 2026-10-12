@@ -1,0 +1,9 @@
+{
+  "name": "NextLaw607",
+  "short_name": "NextLaw",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f8fafc",
+  "theme_color": "#111827",
+  "description": "Rights-protection and criminal-procedure companion"
+}
