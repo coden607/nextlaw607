@@ -1,5 +1,6 @@
 {
   "name": "nextlaw607",
+  "description": "Citation-verified legal research workspace",
   "private": true,
   "sideEffects": false,
   "type": "module",
