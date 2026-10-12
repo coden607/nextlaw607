@@ -13,6 +13,11 @@ permissions:
 
 jobs:
   mem0-live:
+    # Skip gracefully when the protected credential is not configured on the
+    # repo — PRs (especially forks) must not hard-fail on a job that can never
+    # succeed. The in-step checks still fail closed when the job does run with
+    # missing/invalid configuration.
+    if: ${{ secrets.MEM0_API_KEY != '' }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
@@ -36,6 +41,7 @@ jobs:
       - run: pytest -q compat/test_mem0_live_smoke.py
 
   langfuse-live:
+    if: ${{ secrets.LANGFUSE_PUBLIC_KEY != '' && secrets.LANGFUSE_SECRET_KEY != '' }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
@@ -62,6 +68,7 @@ jobs:
       - run: pytest -q compat/test_langfuse_live_smoke.py
 
   sentry-live:
+    if: ${{ secrets.SENTRY_DSN != '' && secrets.SENTRY_AUTH_TOKEN != '' && secrets.SENTRY_ORG != '' && secrets.SENTRY_PROJECT != '' }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
@@ -92,6 +99,7 @@ jobs:
       - run: pytest -q compat/test_sentry_live_smoke.py
 
   evaluation-live:
+    if: ${{ secrets.ANTHROPIC_API_KEY != '' }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
     env:
@@ -117,6 +125,7 @@ jobs:
       - run: pytest -q compat/test_evaluation_live_smoke.py
 
   cloudflare-live-preflight:
+    if: ${{ secrets.CLOUDFLARE_API_TOKEN != '' && secrets.CLOUDFLARE_ACCOUNT_ID != '' && secrets.NEXTLAW_API_ORIGIN != '' && secrets.CLOUDFLARE_DEPLOY_URL != '' }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     env:
