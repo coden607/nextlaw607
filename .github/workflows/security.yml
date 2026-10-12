@@ -1,0 +1,63 @@
+name: Security release gate
+
+on:
+  push:
+  pull_request:
+  schedule:
+    - cron: '23 8 * * 1'
+
+permissions:
+  contents: read
+
+jobs:
+  secret-scan:
+    runs-on: ubuntu-latest
+    env:
+      NEXTLAW_EXACT_REVISION: ${{ github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Assert exact revision
+        shell: bash
+        run: test "$(git rev-parse HEAD)" = "$NEXTLAW_EXACT_REVISION"
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  dependency-audit:
+    runs-on: ubuntu-latest
+    env:
+      NEXTLAW_EXACT_REVISION: ${{ github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Assert exact revision
+        shell: bash
+        run: test "$(git rev-parse HEAD)" = "$NEXTLAW_EXACT_REVISION"
+      - name: Audit Python runtime dependencies in isolation
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m venv .audit-venv
+          . .audit-venv/bin/activate
+          python -m pip install --upgrade pip
+          python -m pip install -e . pip-audit
+          pip-audit --local
+      - name: Audit web dependency graph
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd apps/web
+          npm install --ignore-scripts --no-audit --no-fund
+          npm audit --audit-level=high

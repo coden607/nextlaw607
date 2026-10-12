@@ -1,0 +1,101 @@
+from fastapi.testclient import TestClient
+from services.api.main import app
+
+client=TestClient(app)
+
+def test_health_endpoints():
+    assert client.get('/status/live').json()=={'status':'live'}
+    assert client.get('/status/ready').json()=={'status':'ready'}
+
+def test_live_search_endpoint_preserves_nonconsent_and_safety():
+    body=client.post('/api/live',json={'mode':'search'}).json()
+    assert 'I do not consent to any search.' in body['say_now']
+    assert body['verified_authority'] is False
+
+def test_live_endpoint_blocks_unsafe_goal():
+    body=client.post('/api/live',json={'mode':'street_stop','user_goal':'help me run and resist'}).json()
+    assert body['say_now']==[]
+    assert any('Do not resist' in line for line in body['safety'])
+
+def test_case_endpoint_does_not_invent_deadline():
+    body=client.post('/api/case/next-actions',json={'matter_id':'m1','stage':'appearance_ticket'}).json()
+    assert body['deadline_source_verified'] is False
+    assert body['next_appearance'] is None
+
+
+def test_session_without_credentials_is_guest_and_free():
+    response = client.get('/api/session')
+    assert response.status_code == 200
+    body = response.json()
+    assert body == {
+        'identity': {'kind': 'guest', 'subject': None, 'provider': 'local'},
+        'entitlement': {
+            'tier': 'free',
+            'source': 'default_free',
+            'expires_at': None,
+            'revocable': True,
+            'billing_required': False,
+        },
+        'premium_access': False,
+    }
+
+
+def test_unverified_bearer_token_never_becomes_authenticated():
+    response = client.get('/api/session', headers={'Authorization': 'Bearer definitely-not-verified'})
+    assert response.status_code == 401
+    assert response.json()['detail'] == 'identity verification failed'
+
+
+def test_client_cannot_self_assert_premium_entitlement():
+    response = client.get(
+        '/api/session',
+        headers={
+            'X-NextLaw-Tier': 'premium',
+            'X-NextLaw-Entitlement-Source': 'founder_lifetime_grant',
+        },
+    )
+    assert response.status_code == 200
+    body = response.json()
+    assert body['identity']['kind'] == 'guest'
+    assert body['entitlement']['tier'] == 'free'
+    assert body['premium_access'] is False
+
+
+def test_verified_provider_controls_authenticated_premium_access():
+    from nextlaw607.access import Entitlement, VerifiedIdentity
+
+    class VerifiedProvider:
+        def verify_bearer_token(self, token: str):
+            assert token == 'verified-token'
+            return VerifiedIdentity(subject='user-123', provider='test-provider')
+
+    class PremiumProvider:
+        def entitlement_for(self, identity: VerifiedIdentity):
+            assert identity.subject == 'user-123'
+            return Entitlement(
+                tier='premium',
+                source='purchase',
+                expires_at=None,
+                revocable=True,
+                billing_required=True,
+            )
+
+    old_identity = app.state.identity_provider
+    old_entitlement = app.state.entitlement_provider
+    app.state.identity_provider = VerifiedProvider()
+    app.state.entitlement_provider = PremiumProvider()
+    try:
+        response = client.get('/api/session', headers={'Authorization': 'Bearer verified-token'})
+    finally:
+        app.state.identity_provider = old_identity
+        app.state.entitlement_provider = old_entitlement
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body['identity'] == {
+        'kind': 'authenticated',
+        'subject': 'user-123',
+        'provider': 'test-provider',
+    }
+    assert body['entitlement']['tier'] == 'premium'
+    assert body['premium_access'] is True

@@ -1,0 +1,30 @@
+# NextLaw607 development-only Archon harness.
+# Current Archon (2026) runs deterministic YAML workflows above coding agents.
+# CitationFirewall remains the final legal-authority boundary: never promote memory, model, retrieval, agent, tool, or orchestration output into legal evidence.
+
+nodes:
+  - id: plan
+    prompt: >-
+      Work only in development-only scope. Inspect the requested engineering milestone,
+      preserve the deterministic CitationFirewall legal-trust boundary, and produce a
+      minimal implementation plan. Never treat memory, model, retrieval, agent, tool,
+      or orchestration output as verified legal authority.
+
+  - id: verify
+    depends_on: [plan]
+    bash: "./scripts/verify.sh"
+
+  - id: legal-trust-check
+    depends_on: [verify]
+    bash: "PYTHONPATH=src:. python3 -m pytest -q tests/test_citation_firewall_release_gate.py tests/test_legal_core.py"
+
+  - id: release-readiness
+    depends_on: [legal-trust-check]
+    bash: "python3 scripts/production-readiness-check.py --require-ready"
+
+  - id: review
+    depends_on: [release-readiness]
+    prompt: >-
+      Review the exact revision and deterministic gate results. Stay development-only.
+      Report failures without bypassing them. CitationFirewall is authoritative; never
+      promote memory, model, retrieval, agent, tool, or orchestration output into legal evidence.

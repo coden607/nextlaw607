@@ -1,0 +1,269 @@
+name: n8n live smoke
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  n8n-live-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      N8N_VERSION: 2.37.11
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - name: Bootstrap owner, import workflow, and activate through runtime API
+        shell: bash
+        env:
+          NEXTLAW_EXACT_REVISION: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          set -euo pipefail
+          data_dir="$RUNNER_TEMP/nextlaw607-n8n"
+          cookie_jar="$RUNNER_TEMP/nextlaw607-n8n.cookies"
+          workflow_id="nextlaw607ReleaseSmoke"
+          owner_email="nextlaw607-smoke@example.invalid"
+          owner_password="$(python3 - <<'PY'
+          import secrets
+          print('N8nSmoke1-' + secrets.token_urlsafe(24))
+          PY
+          )"
+          export owner_email owner_password
+          mkdir -p "$data_dir"
+          chmod 0777 "$data_dir"
+
+          start_n8n() {
+            docker run -d --name nextlaw607-n8n \
+              -p 127.0.0.1:5678:5678 \
+              -e N8N_DIAGNOSTICS_ENABLED=false \
+              -e N8N_VERSION_NOTIFICATIONS_ENABLED=false \
+              -e N8N_TEMPLATES_ENABLED=false \
+              -e N8N_HOST=0.0.0.0 \
+              -e N8N_PORT=5678 \
+              -v "$data_dir:/home/node/.n8n" \
+              "docker.n8n.io/n8nio/n8n:${N8N_VERSION}" >/dev/null
+
+            health_ready=false
+            for attempt in $(seq 1 60); do
+              if curl --fail --silent --show-error http://127.0.0.1:5678/healthz >/dev/null 2>&1; then
+                health_ready=true
+                break
+              fi
+              sleep 1
+            done
+            test "$health_ready" = true
+
+            rest_ready=false
+            for attempt in $(seq 1 60); do
+              settings_status="$(curl --silent --show-error \
+                -o /tmp/nextlaw607-n8n-settings.json \
+                -w '%{http_code}' \
+                http://127.0.0.1:5678/rest/settings || true)"
+              if test "$settings_status" = "200" && python3 - <<'PY'
+          import json
+          from pathlib import Path
+          try:
+              payload = json.loads(Path('/tmp/nextlaw607-n8n-settings.json').read_text(encoding='utf-8'))
+              valid = isinstance(payload.get('data', {}).get('userManagement', {}), dict)
+          except Exception:
+              valid = False
+          raise SystemExit(0 if valid else 1)
+          PY
+              then
+                rest_ready=true
+                break
+              fi
+              sleep 1
+            done
+            test "$rest_ready" = true
+          }
+
+          stop_n8n() {
+            docker logs nextlaw607-n8n > /tmp/nextlaw607-n8n-server.log 2>&1 || true
+            docker rm -f nextlaw607-n8n >/dev/null 2>&1 || true
+          }
+          trap stop_n8n EXIT
+
+          start_n8n
+          setup_payload="$(python3 - <<'PY'
+          import json, os
+          print(json.dumps({
+              'email': os.environ['owner_email'],
+              'firstName': 'NextLaw607',
+              'lastName': 'Smoke',
+              'password': os.environ['owner_password'],
+          }))
+          PY
+          )"
+          setup_status="$(curl --silent --show-error \
+            -o /tmp/nextlaw607-n8n-owner-setup.json \
+            -w '%{http_code}' \
+            -H 'content-type: application/json' \
+            --data "$setup_payload" \
+            http://127.0.0.1:5678/rest/owner/setup)"
+          echo "n8n owner setup HTTP status: $setup_status"
+          test "$setup_status" = "200"
+
+          owner_id="$(python3 - "$data_dir/database.sqlite" "$owner_email" <<'PY'
+          import sqlite3, sys
+          db = sqlite3.connect(sys.argv[1])
+          row = db.execute('SELECT id FROM user WHERE email = ?', (sys.argv[2],)).fetchone()
+          if not row:
+              raise SystemExit('configured owner user was not persisted')
+          print(row[0])
+          PY
+          )"
+          stop_n8n
+          trap - EXIT
+
+          docker run --rm \
+            -u node \
+            -v "$data_dir:/home/node/.n8n" \
+            -v "$PWD/config/n8n:/work:ro" \
+            "docker.n8n.io/n8nio/n8n:${N8N_VERSION}" \
+            import:workflow --input=/work/release-smoke.json --userId="$owner_id"
+
+          cp config/n8n/release-smoke.json /tmp/nextlaw607-n8n-source.json
+          start_n8n
+          trap stop_n8n EXIT
+
+          login_payload="$(python3 - <<'PY'
+          import json, os
+          print(json.dumps({
+              'emailOrLdapLoginId': os.environ['owner_email'],
+              'password': os.environ['owner_password'],
+          }))
+          PY
+          )"
+          login_status="$(curl -c "$cookie_jar" --silent --show-error \
+            -o /tmp/nextlaw607-n8n-login.json \
+            -w '%{http_code}' \
+            -H 'content-type: application/json' \
+            --data "$login_payload" \
+            http://127.0.0.1:5678/rest/login)"
+          echo "n8n login HTTP status: $login_status"
+          test "$login_status" = "200"
+
+          version_id="$(python3 - "$data_dir/database.sqlite" "$workflow_id" <<'PY'
+          import sqlite3, sys
+          db = sqlite3.connect(sys.argv[1])
+          row = db.execute('SELECT "versionId" FROM workflow_entity WHERE id = ?', (sys.argv[2],)).fetchone()
+          if not row:
+              raise SystemExit('imported workflow missing')
+          print(row[0])
+          PY
+          )"
+          activation_payload="$(python3 - "$version_id" <<'PY'
+          import json, sys
+          print(json.dumps({'versionId': sys.argv[1]}))
+          PY
+          )"
+          activation_status="$(curl -b "$cookie_jar" --silent --show-error \
+            -o /tmp/nextlaw607-n8n-activation.json \
+            -w '%{http_code}' \
+            -X POST \
+            -H 'content-type: application/json' \
+            --data "$activation_payload" \
+            "http://127.0.0.1:5678/rest/workflows/${workflow_id}/activate")"
+          echo "n8n activation HTTP status: $activation_status"
+          cat /tmp/nextlaw607-n8n-activation.json
+          test "$activation_status" = "200"
+
+          registered=false
+          for attempt in $(seq 1 60); do
+            if python3 - "$data_dir/database.sqlite" "$workflow_id" <<'PY'
+          import sqlite3, sys
+          db = sqlite3.connect(sys.argv[1])
+          row = db.execute(
+              'SELECT 1 FROM webhook_entity WHERE "workflowId" = ? AND "webhookPath" = ? AND method = ? AND node = ?',
+              (sys.argv[2], 'nextlaw607-release-smoke', 'POST', 'Release Smoke Webhook'),
+          ).fetchone()
+          raise SystemExit(0 if row else 1)
+          PY
+            then
+              registered=true
+              break
+            fi
+            sleep 1
+          done
+          test "$registered" = true
+
+          python3 - "$data_dir/database.sqlite" "$workflow_id" <<'PY' | tee /tmp/nextlaw607-n8n-publication-state.txt
+          import json, sqlite3, sys
+          db = sqlite3.connect(sys.argv[1])
+          db.row_factory = sqlite3.Row
+          workflow_id = sys.argv[2]
+          workflow = db.execute(
+              'SELECT id, active, "activeVersionId", "versionId", "triggerCount" FROM workflow_entity WHERE id = ?',
+              (workflow_id,),
+          ).fetchone()
+          print('workflow_entity=', dict(workflow) if workflow else None)
+          for table in ('workflow_published_version', 'workflow_publication_outbox', 'workflow_publication_trigger_status', 'webhook_entity'):
+              columns = [row['name'] for row in db.execute(f'PRAGMA table_info("{table}")')]
+              if 'workflowId' in columns:
+                  rows = [dict(row) for row in db.execute(f'SELECT * FROM "{table}" WHERE "workflowId" = ?', (workflow_id,)).fetchall()]
+              else:
+                  rows = [dict(row) for row in db.execute(f'SELECT * FROM "{table}" LIMIT 20').fetchall()]
+              print(f'{table}.rows=', json.dumps(rows, sort_keys=True, default=str))
+          PY
+
+          python3 - "$data_dir/database.sqlite" "$workflow_id" <<'PY' | tee /tmp/nextlaw607-n8n-webhooks.txt
+          import sqlite3, sys
+          db = sqlite3.connect(sys.argv[1])
+          rows = db.execute(
+              'SELECT "workflowId", "webhookPath", method, node, "webhookId" FROM webhook_entity WHERE "workflowId" = ?',
+              (sys.argv[2],),
+          ).fetchall()
+          print(rows)
+          expected = (sys.argv[2], 'nextlaw607-release-smoke', 'POST', 'Release Smoke Webhook')
+          if not any(row[:4] == expected for row in rows):
+              raise SystemExit(f'expected static webhook registration missing: {rows!r}')
+          PY
+
+          production_route="/webhook/nextlaw607-release-smoke"
+          http_status="$(curl --silent --show-error \
+            -o /tmp/nextlaw607-n8n-response.json \
+            -w '%{http_code}' \
+            -X POST \
+            -H 'content-type: application/json' \
+            --data '{"probe":"nextlaw607-release-smoke"}' \
+            "http://127.0.0.1:5678${production_route}")"
+          echo "n8n webhook route: $production_route"
+          echo "n8n webhook HTTP status: $http_status"
+          cat /tmp/nextlaw607-n8n-response.json
+          test "$http_status" = "200"
+
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          payload = json.loads(Path('/tmp/nextlaw607-n8n-response.json').read_text(encoding='utf-8'))
+          expected = {
+              'scope': 'development-only',
+              'authority_eligible': False,
+              'trusted': False,
+              'verified_authority': False,
+          }
+          if payload != expected:
+              raise SystemExit(f'unexpected n8n webhook payload: {payload!r}')
+          PY
+
+          printf '{"schema_version":1,"revision":"%s","n8n_version":"%s","workflow_id":"%s","scope":"development-only","authority_eligible":false,"webhook_execution":"passed","activation_path":"authenticated-rest"}\n' \
+            "$NEXTLAW_EXACT_REVISION" "$N8N_VERSION" "$workflow_id" > n8n-live-evidence.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: n8n-live-evidence-${{ github.event.pull_request.head.sha || github.sha }}
+          path: |
+            n8n-live-evidence.json
+            /tmp/nextlaw607-n8n-response.json
+            /tmp/nextlaw607-n8n-server.log
+            /tmp/nextlaw607-n8n-source.json
+            /tmp/nextlaw607-n8n-owner-setup.json
+            /tmp/nextlaw607-n8n-login.json
+            /tmp/nextlaw607-n8n-activation.json
+            /tmp/nextlaw607-n8n-webhooks.txt
+            /tmp/nextlaw607-n8n-publication-state.txt
+            /tmp/nextlaw607-n8n-settings.json
+          if-no-files-found: warn

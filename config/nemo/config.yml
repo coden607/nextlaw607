@@ -1,0 +1,9 @@
+models: []
+
+rails:
+  input:
+    flows:
+      - nextlaw deterministic preflight required
+  output:
+    flows:
+      - nextlaw citation firewall authority required

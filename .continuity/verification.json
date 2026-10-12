@@ -1,0 +1,35 @@
+{
+  "gates": [
+    "compile",
+    "tests",
+    "typecheck",
+    "security",
+    "privacy",
+    "architecture",
+    "evals",
+    "e2e",
+    "accessibility",
+    "performance",
+    "pwa"
+  ],
+  "commands": {
+    "compile": "python3 -m compileall -q src services",
+    "tests": "./scripts/verify-python.sh",
+    "typecheck": "./scripts/verify-web.sh",
+    "evals": "PYTHONPATH=. python3 -m pytest -q tests/test_rules_evals.py",
+    "security": "python3 scripts/security-check.py",
+    "privacy": "npm --prefix apps/web test",
+    "architecture": "python3 scripts/architecture-check.py",
+    "e2e": "PYTHONPATH=src:. python3 -m pytest -q tests/test_local_e2e.py",
+    "pwa": "python3 scripts/pwa-check.py",
+    "accessibility": "python3 scripts/browser-evidence-check.py",
+    "performance": "python3 scripts/browser-evidence-check.py"
+  },
+  "min_quality": 0.95,
+  "min_reliability": 0.97,
+  "performance_budgets": {
+    "lcp_ms": 2500,
+    "cls": 0.1,
+    "inp_ms": 200
+  }
+}
