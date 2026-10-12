@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Label, Textarea } from "@/components/ui/input";
 import { runTriad } from "@/lib/ai";
 import { searchOpinions } from "@/lib/courtlistener";
-import { CASES, STATUTES } from "@/lib/corpus";
+import { CASES, STATUTES, corpusCitationsForTemplate } from "@/lib/corpus";
 import { newDraftId, useCounsel } from "@/lib/store";
 import { TEMPLATES, templateById } from "@/lib/templates";
 import type { TriadResult } from "@/lib/types";
@@ -96,7 +96,7 @@ function DraftDesk() {
         criticScore: payload.result.critic.score,
         criticNotes: payload.result.critic.flaws,
         missingAuthorities: payload.result.critic.missingStatutes,
-        citations: [],
+        citations: payload.offline ? corpusCitationsForTemplate(tmpl) : [],
         plannerMemo: payload.result.planner.framework,
         criticMemo: payload.result.critic.memo,
         createdAt: new Date().toISOString(),
@@ -215,7 +215,11 @@ function DraftDesk() {
                 </div>
               </div>
               <TriadColumns result={result} />
-              <ContractPaper title={result.draft.title} body={result.draft.body} />
+              <ContractPaper
+                title={result.draft.title}
+                body={result.draft.body}
+                onCopy={() => toast.success("Draft copied. Attorney review still required.")}
+              />
             </>
           ) : (
             <pre className="max-h-80 overflow-auto whitespace-pre-wrap rounded-xl border border-border bg-elevated p-5 font-mono text-xs leading-relaxed text-muted">
