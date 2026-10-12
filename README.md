@@ -1,68 +1,61 @@
 # NextLaw607
 
-NextLaw607 is a privacy-first, rights-protection and criminal-procedure companion built on ContinuityOS. The user-facing application is TypeScript/PWA-first; Python is isolated behind a FastAPI/legal-processing boundary.
+New York General Counsel terminal. It drafts instruments, harvests binding authority, and then attacks its own work as opposing counsel.
 
-> NextLaw607 is not a law firm and does not create an attorney-client relationship. Important legal conclusions must be verified against current, jurisdiction-appropriate authority. The product must not advise resistance, flight, interference, deception, obstruction, evidence destruction, or witness tampering.
+Not a law firm. Not legal advice. A human New York attorney must review anything before execution or filing.
 
-## Architecture
+## What it does
 
-```text
-TypeScript PWA
-  ├─ Live rights mode
-  ├─ Offline rights pack
-  ├─ Case Guardian
-  └─ Local-first privacy state
-        ↓ HTTP API
-FastAPI
-  ├─ Live encounter safety engine
-  ├─ Criminal procedure state
-  ├─ Research/citation firewall
-  ├─ CourtListener v4 candidate retrieval
-  ├─ Temporal verified-rule registry
-  └─ Legal adversarial evals
-```
+- **Instrument desk** — NY-governed templates (ICA, NDA, parenting stipulation, settlement, residential lease, LLC operating agreement, criminal defense workup) with required statutes and Court of Appeals cases wired in.
+- **Authority harvest** — CourtListener v4 opinions (NY / Appellate Division / Supreme / 2d Cir.) plus NY Senate Open Legislation pulls and a verified internal bank the critic is allowed to trust.
+- **Planner · Executor · Critic triad** — one user-initiated Grok run. Score below 85 forces rewrite. Unverified cites are rejected.
+- **Matter files** — local intake, captions, counties, parties. Nothing is a court filing.
+- **Playbook** — persona, skills, MCP gateway, and the six-step workflow.
+- **Stack** — Cole Medin’s 2026 AI-first stack mapped onto this counsel terminal.
 
-## iSH install
+Default jurisdiction: New York. Hierarchy is Court of Appeals → the relevant Appellate Division → other departments (persuasive) → trial courts.
 
-From the repository:
+## Zero-hallucination rule
 
-```sh
-./scripts/ish-bootstrap.sh
-```
+The model may cite only:
 
-This installs/reuses Python, pip, Node.js and npm, creates a virtual environment where supported, installs the Python package and web dev dependencies, then runs the verification suite.
+1. The verified statute/case bank in `src/lib/corpus.ts`
+2. Live CourtListener / NY Senate hits from the current run
 
-## Run
+Anything else is marked `[AUTHORITY NEEDED]` or `[UNVERIFIED]` and the critic fails the draft.
 
-```sh
-. .venv/bin/activate 2>/dev/null || true
-./scripts/dev.sh
-```
+## Local development
 
-Defaults:
-
-- API: `http://127.0.0.1:8000`
-- PWA: `http://127.0.0.1:4173`
-
-## Test / verify
-
-```sh
-./scripts/verify.sh
-```
-
-The current local gate checks Python compilation/tests, strict TypeScript compilation/tests and JSON manifests. The final release gate additionally requires production-equivalent browser E2E, console/network inspection, privacy leakage checks, accessibility, PWA/offline behavior, performance analytics, security scans, and legal evals.
-
-## npm-only web workflow
-
-```sh
-npm --prefix apps/web install
-npm run build
-npm run test:web
+```bash
+npm install
 npm run dev
 ```
 
-The web layer is intentionally TypeScript-first. Python remains behind the API boundary for legal processing, retrieval/RAG and other Python-ecosystem capabilities.
+Server-only environment (never `VITE_`):
 
-## CourtListener
+| Variable | Purpose |
+| --- | --- |
+| `XAI_API_KEY` | Grok counsel + optional TTS |
+| `COURTLISTENER_API_TOKEN` | Raises Free Law Project rate limits |
 
-The legal core uses CourtListener v4 search as a research-candidate source. A CourtListener result is **not** automatically treated as good law. It remains unverified until the citation/provenance/validity gates succeed.
+Without a model key the desk still fills verified templates offline.
+
+```bash
+npm run typecheck
+npm run build
+```
+
+## ContinuityOS
+
+This repo is also the first legal-intelligence pack on ContinuityOS (`coden607/continuityos`).
+
+```bash
+continuity config-check continuity.toml
+continuity execute "Explain the task" --config continuity.toml
+```
+
+Pack metadata lives in `packs/nextlaw607/`.
+
+## Disclaimer
+
+Output is a drafting aid. Binding effect depends on capacity, consideration, statutory formalities, and a licensed attorney’s review under New York law. The terminal will not pretend a PDF is filed.
