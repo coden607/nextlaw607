@@ -145,6 +145,8 @@ class CriminalCaseState:
                 raise ValueError("appearance predates source verification")
             if source_kind in {"court_notice", "docket"} and normalized_source_url is None:
                 raise ValueError("verified court appearance requires official procedure source URL")
+            if self.next_appearance_verified_at is not None and verified_at < self.next_appearance_verified_at:
+                raise ValueError("stale next-appearance verification cannot supersede newer evidence")
         self.next_appearance = when
         self.next_appearance_source = source.strip()
         self.next_appearance_source_kind = source_kind
