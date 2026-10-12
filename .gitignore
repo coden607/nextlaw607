@@ -10,3 +10,14 @@ dist/
 build/
 node_modules/
 .DS_Store
+.vercel/
+screenshots/
+artifacts/
+tmp/
+.grok/*
+!.grok/app-env.json
+!.grok/skills/
+!.grok/skills/**
+*.log
+.output/
+.vercel
