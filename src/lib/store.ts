@@ -12,6 +12,7 @@ type CounselState = {
   upsertMatter: (m: Matter) => void;
   deleteMatter: (id: string) => void;
   addDraft: (d: DraftRecord) => void;
+  deleteDraft: (id: string) => void;
   seedIfEmpty: () => void;
 };
 
@@ -64,6 +65,7 @@ export const useCounsel = create<CounselState>()(
           activeMatterId: get().activeMatterId === mid ? null : get().activeMatterId,
         }),
       addDraft: (d) => set({ drafts: [d, ...get().drafts].slice(0, 40) }),
+      deleteDraft: (id) => set({ drafts: get().drafts.filter((d) => d.id !== id) }),
       seedIfEmpty: () => {
         if (get().matters.length === 0) {
           set({ matters: [DEMO_MATTER], activeMatterId: DEMO_MATTER.id });

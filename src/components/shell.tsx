@@ -3,6 +3,7 @@ import {
   BookOpen,
   Briefcase,
   FileSignature,
+  FileText,
   Gavel,
   LayoutGrid,
   Menu,
@@ -21,6 +22,7 @@ import { useCounsel } from "@/lib/store";
 const NAV = [
   { to: "/", label: "Deck", icon: LayoutGrid },
   { to: "/draft", label: "Draft", icon: FileSignature },
+  { to: "/drafts", label: "Drafts", icon: FileText },
   { to: "/research", label: "Research", icon: Search },
   { to: "/triad", label: "Triad", icon: Users },
   { to: "/matters", label: "Matters", icon: Briefcase },
@@ -76,6 +78,7 @@ export function Shell({ children }: { children: ReactNode }) {
                 <Link
                   key={item.to}
                   to={item.to}
+                  aria-current={on ? "page" : undefined}
                   className={cn(
                     "flex h-11 items-center gap-3 rounded-md px-3 text-sm transition-colors duration-[var(--motion-quick)]",
                     on ? "bg-elevated text-fg" : "text-muted hover:bg-elevated hover:text-fg",
@@ -143,12 +146,20 @@ export function Shell({ children }: { children: ReactNode }) {
             </div>
             <div className="grid grid-cols-2 gap-2">
               {NAV.slice(4).map((item) => {
+                const on =
+                  item.to === "/"
+                    ? pathname === "/"
+                    : pathname === item.to || pathname.startsWith(`${item.to}/`);
                 const Icon = item.icon;
                 return (
                   <Link
                     key={item.to}
                     to={item.to}
-                    className="flex h-14 items-center gap-3 rounded-md border border-border bg-elevated px-3 text-sm"
+                    aria-current={on ? "page" : undefined}
+                    className={cn(
+                      "flex h-14 items-center gap-3 rounded-md border border-border bg-elevated px-3 text-sm",
+                      on ? "text-fg" : "text-muted",
+                    )}
                   >
                     <Icon className="size-4" />
                     {item.label}
@@ -171,6 +182,7 @@ export function Shell({ children }: { children: ReactNode }) {
             <Link
               key={item.to}
               to={item.to}
+              aria-current={on ? "page" : undefined}
               className={cn(
                 "flex min-h-14 flex-col items-center justify-center gap-1 text-[10px] uppercase tracking-wider",
                 on ? "text-fg" : "text-subtle",

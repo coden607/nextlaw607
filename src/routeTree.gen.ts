@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as DraftRouteImport } from './routes/draft'
+import { Route as DraftsRouteImport } from './routes/drafts'
 import { Route as IntakeRouteImport } from './routes/intake'
 import { Route as MattersRouteImport } from './routes/matters'
 import { Route as PlaybookRouteImport } from './routes/playbook'
@@ -26,6 +27,11 @@ const IndexRoute = IndexRouteImport.update({
 const DraftRoute = DraftRouteImport.update({
   id: '/draft',
   path: '/draft',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DraftsRoute = DraftsRouteImport.update({
+  id: '/drafts',
+  path: '/drafts',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IntakeRoute = IntakeRouteImport.update({
@@ -62,6 +68,7 @@ const TriadRoute = TriadRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/draft': typeof DraftRoute
+  '/drafts': typeof DraftsRoute
   '/intake': typeof IntakeRoute
   '/matters': typeof MattersRoute
   '/playbook': typeof PlaybookRoute
@@ -72,6 +79,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/draft': typeof DraftRoute
+  '/drafts': typeof DraftsRoute
   '/intake': typeof IntakeRoute
   '/matters': typeof MattersRoute
   '/playbook': typeof PlaybookRoute
@@ -83,6 +91,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/draft': typeof DraftRoute
+  '/drafts': typeof DraftsRoute
   '/intake': typeof IntakeRoute
   '/matters': typeof MattersRoute
   '/playbook': typeof PlaybookRoute
@@ -95,6 +104,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/draft'
+    | '/drafts'
     | '/intake'
     | '/matters'
     | '/playbook'
@@ -105,6 +115,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/draft'
+    | '/drafts'
     | '/intake'
     | '/matters'
     | '/playbook'
@@ -115,6 +126,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/draft'
+    | '/drafts'
     | '/intake'
     | '/matters'
     | '/playbook'
@@ -126,6 +138,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   DraftRoute: typeof DraftRoute
+  DraftsRoute: typeof DraftsRoute
   IntakeRoute: typeof IntakeRoute
   MattersRoute: typeof MattersRoute
   PlaybookRoute: typeof PlaybookRoute
@@ -148,6 +161,13 @@ declare module '@tanstack/react-router' {
       path: '/draft'
       fullPath: '/draft'
       preLoaderRoute: typeof DraftRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/drafts': {
+      id: '/drafts'
+      path: '/drafts'
+      fullPath: '/drafts'
+      preLoaderRoute: typeof DraftsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/intake': {
@@ -198,6 +218,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   DraftRoute: DraftRoute,
+  DraftsRoute: DraftsRoute,
   IntakeRoute: IntakeRoute,
   MattersRoute: MattersRoute,
   PlaybookRoute: PlaybookRoute,
