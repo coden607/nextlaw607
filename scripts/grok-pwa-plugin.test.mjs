@@ -20,6 +20,8 @@ import {
 import { renderInstallPage } from "./grok-pwa-plugin.mjs";
 
 const TEMPLATE_ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
+const TEST_WORKSPACE = mkdtempSync(join(tmpdir(), "grok-pwa-test-"));
+process.chdir(TEST_WORKSPACE);
 
 // Tests that exercise title/name fallback must not read this repo's own
 // src/lib/og/site.json or public/og.jpg — snapshotOgIdentity(cwd) would pick

@@ -8,6 +8,8 @@ type CounselState = {
   activeMatterId: string | null;
   voiceOn: boolean;
   setVoiceOn: (v: boolean) => void;
+  holoMode: boolean;
+  setHoloMode: (v: boolean) => void;
   setActiveMatter: (id: string | null) => void;
   upsertMatter: (m: Matter) => void;
   deleteMatter: (id: string) => void;
@@ -50,6 +52,8 @@ export const useCounsel = create<CounselState>()(
       activeMatterId: DEMO_MATTER.id,
       voiceOn: false,
       setVoiceOn: (v) => set({ voiceOn: v }),
+      holoMode: true,
+      setHoloMode: (v) => set({ holoMode: v }),
       setActiveMatter: (id) => set({ activeMatterId: id }),
       upsertMatter: (m) =>
         set({

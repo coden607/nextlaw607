@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 import { Toaster } from "sonner";
+import { HoloOverlay, HoloToggle } from "@/components/holo-hud";
 import { cn } from "@/lib/cn";
 import { useCounsel } from "@/lib/store";
 
@@ -38,6 +39,7 @@ export function Shell({ children }: { children: ReactNode }) {
   const seedIfEmpty = useCounsel((s) => s.seedIfEmpty);
   const voiceOn = useCounsel((s) => s.voiceOn);
   const setVoiceOn = useCounsel((s) => s.setVoiceOn);
+  const holoMode = useCounsel((s) => s.holoMode);
   const active = useCounsel((s) => s.matters.find((m) => m.id === s.activeMatterId));
   const [more, setMore] = useState(false);
 
@@ -50,19 +52,36 @@ export function Shell({ children }: { children: ReactNode }) {
   }, [pathname]);
 
   return (
-    <div className="min-h-dvh bg-bg text-fg">
+    <div className={cn("min-h-dvh bg-bg text-fg relative", holoMode && "holo-grid-mesh")}>
+      <HoloOverlay />
       <Toaster theme="dark" position="bottom-right" />
-      <div className="flex min-h-dvh">
-        <aside className="no-print sticky top-0 hidden h-dvh w-56 shrink-0 flex-col border-r border-border bg-surface md:flex">
-          <Link to="/" className="flex items-center gap-3 px-4 py-5">
-            <span className="flex size-9 items-center justify-center rounded-md border border-border bg-elevated">
-              <Scale className="size-4 text-accent" />
+      <div className="flex min-h-dvh relative z-10">
+        <aside
+          className={cn(
+            "no-print sticky top-0 hidden h-dvh w-56 shrink-0 flex-col border-r border-border bg-surface md:flex relative",
+            holoMode && "border-cyan-500/20 shadow-[1px_0_15px_rgba(0,240,255,0.05)]",
+          )}
+        >
+          {holoMode ? <div className="holo-beam-top" /> : null}
+          <Link to="/" className="flex items-center gap-3 px-4 py-5 group">
+            <span
+              className={cn(
+                "flex size-9 items-center justify-center rounded-md border border-border bg-elevated transition-all duration-300",
+                holoMode && "border-cyan-400/40 bg-cyan-950/20 shadow-[0_0_10px_rgba(0,240,255,0.25)] group-hover:shadow-[0_0_18px_rgba(0,240,255,0.45)]",
+              )}
+            >
+              <Scale className={cn("size-4 text-accent transition-colors", holoMode && "text-cyan-300")} />
             </span>
             <span className="min-w-0">
-              <span className="block font-display text-lg leading-tight tracking-tight">
-                NextLaw<span className="text-muted">607</span>
+              <span className={cn("block font-display text-lg leading-tight tracking-tight", holoMode && "holo-text")}>
+                NextLaw<span className={holoMode ? "text-cyan-400/60" : "text-muted"}>607</span>
               </span>
-              <span className="block font-mono text-[10px] uppercase tracking-[0.18em] text-subtle">
+              <span
+                className={cn(
+                  "block font-mono text-[10px] uppercase tracking-[0.18em] text-subtle",
+                  holoMode && "text-cyan-400/60",
+                )}
+              >
                 N.Y. General Counsel
               </span>
             </span>
@@ -80,22 +99,27 @@ export function Shell({ children }: { children: ReactNode }) {
                   to={item.to}
                   aria-current={on ? "page" : undefined}
                   className={cn(
-                    "flex h-11 items-center gap-3 rounded-md px-3 text-sm transition-colors duration-[var(--motion-quick)]",
-                    on ? "bg-elevated text-fg" : "text-muted hover:bg-elevated hover:text-fg",
+                    "flex h-11 items-center gap-3 rounded-md px-3 text-sm transition-all duration-[var(--motion-quick)]",
+                    on
+                      ? holoMode
+                        ? "border-l-2 border-cyan-400 bg-cyan-950/30 text-cyan-200 shadow-[0_0_12px_rgba(0,240,255,0.15)]"
+                        : "bg-elevated text-fg"
+                      : "text-muted hover:bg-elevated hover:text-fg",
                   )}
                 >
-                  <Icon className="size-4" />
+                  <Icon className={cn("size-4", on && holoMode && "text-cyan-300 drop-shadow-[0_0_4px_#00f0ff]")} />
                   {item.label}
                 </Link>
               );
             })}
           </nav>
-          <div className="border-t border-border px-4 py-4">
+          <div className="border-t border-border px-4 py-4 space-y-2">
+            <HoloToggle className="w-full justify-center" />
             <button
               type="button"
               onClick={() => setVoiceOn(!voiceOn)}
               className={cn(
-                "flex h-11 w-full items-center justify-center gap-2 rounded-md border text-sm",
+                "flex h-11 w-full items-center justify-center gap-2 rounded-md border text-sm transition-colors",
                 voiceOn
                   ? "border-associate bg-elevated text-associate"
                   : "border-border text-muted",
@@ -105,7 +129,7 @@ export function Shell({ children }: { children: ReactNode }) {
               {voiceOn ? "Voice armed" : "Voice idle"}
             </button>
             {active ? (
-              <p className="mt-3 truncate font-mono text-[10px] uppercase tracking-wider text-subtle">
+              <p className="pt-1 truncate font-mono text-[10px] uppercase tracking-wider text-subtle">
                 {active.caption}
               </p>
             ) : null}
@@ -113,17 +137,36 @@ export function Shell({ children }: { children: ReactNode }) {
         </aside>
 
         <div className="flex min-w-0 flex-1 flex-col">
-          <header className="no-print flex h-14 items-center justify-between gap-3 border-b border-border px-4 md:px-6">
+          <header
+            className={cn(
+              "no-print flex h-14 items-center justify-between gap-3 border-b border-border px-4 md:px-6 relative",
+              holoMode && "border-cyan-500/20 bg-surface/80 backdrop-blur-sm",
+            )}
+          >
+            {holoMode ? <div className="holo-beam-top" /> : null}
             <div className="flex min-w-0 items-center gap-2 md:hidden">
-              <Scale className="size-4 shrink-0 text-accent" />
-              <span className="truncate font-display text-base">NextLaw607</span>
+              <Scale className={cn("size-4 shrink-0 text-accent", holoMode && "text-cyan-300")} />
+              <span className={cn("truncate font-display text-base", holoMode && "holo-text")}>NextLaw607</span>
             </div>
-            <p className="hidden truncate font-mono text-[11px] uppercase tracking-[0.16em] text-subtle md:block">
+            <p
+              className={cn(
+                "hidden truncate font-mono text-[11px] uppercase tracking-[0.16em] text-subtle md:block",
+                holoMode && "text-cyan-400/70",
+              )}
+            >
               Sovereign counsel terminal · CPL / PL / DRL 70·240 / FCA Art. 6 / GOL
             </p>
-            <p className="truncate font-mono text-[11px] text-subtle">
-              {active ? active.county + " County" : "No matter"}
-            </p>
+            <div className="flex items-center gap-3">
+              <HoloToggle className="md:hidden" />
+              <p
+                className={cn(
+                  "truncate font-mono text-[11px] text-subtle px-2 py-0.5 rounded border border-transparent",
+                  holoMode && "border-cyan-500/30 text-cyan-300/80 bg-cyan-950/20",
+                )}
+              >
+                {active ? active.county + " County" : "No matter"}
+              </p>
+            </div>
           </header>
           <main className="flex-1 px-4 py-6 pb-24 md:px-8 md:py-8 md:pb-8">{children}</main>
         </div>

@@ -13,6 +13,7 @@ const buttonVariants = cva(
           "border border-border bg-elevated text-fg hover:bg-surface",
         ghost: "text-muted hover:bg-elevated hover:text-fg",
         danger: "bg-danger text-fg hover:opacity-90",
+        holo: "border border-cyan-400/40 bg-cyan-950/25 text-cyan-300 shadow-[0_0_14px_rgba(0,240,255,0.2)] hover:border-cyan-300 hover:bg-cyan-950/45 hover:shadow-[0_0_22px_rgba(0,240,255,0.38)] hover:text-cyan-100",
       },
       size: {
         sm: "h-9 rounded-sm px-3 text-sm",

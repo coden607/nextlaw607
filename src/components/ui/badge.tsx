@@ -5,7 +5,7 @@ export function Badge({
   tone = "muted",
   ...props
 }: React.ComponentProps<"span"> & {
-  tone?: "muted" | "accent" | "partner" | "associate" | "critic" | "ok" | "warn" | "danger";
+  tone?: "muted" | "accent" | "partner" | "associate" | "critic" | "ok" | "warn" | "danger" | "holo";
 }) {
   const tones: Record<string, string> = {
     muted: "border-border text-muted",
@@ -16,6 +16,7 @@ export function Badge({
     ok: "border-ok text-ok",
     warn: "border-warn text-warn",
     danger: "border-danger text-danger",
+    holo: "border-cyan-400/50 bg-cyan-950/30 text-cyan-300 shadow-[0_0_12px_rgba(0,240,255,0.25)]",
   };
   return (
     <span
