@@ -12,12 +12,66 @@ permissions:
   contents: read
 
 jobs:
+  credential-gate:
+    # The secrets context is NOT allowed in job-level `if:` expressions — using
+    # it fails workflow validation for the whole file. Presence detection must
+    # therefore happen in a step, and downstream live jobs read these outputs.
+    # When the repo does not configure the required paid third-party
+    # credentials, the live jobs are SKIPPED (neutral) instead of hard-failing
+    # PRs with errors those PRs can never resolve. The in-step checks in each
+    # live job still fail closed when a job runs with missing or invalid
+    # configuration.
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      mem0: ${{ steps.detect.outputs.mem0 }}
+      langfuse: ${{ steps.detect.outputs.langfuse }}
+      sentry: ${{ steps.detect.outputs.sentry }}
+      evaluation: ${{ steps.detect.outputs.evaluation }}
+      cloudflare: ${{ steps.detect.outputs.cloudflare }}
+    steps:
+      - name: Detect configured provider credentials
+        id: detect
+        shell: bash
+        env:
+          MEM0_API_KEY: ${{ secrets.MEM0_API_KEY }}
+          LANGFUSE_PUBLIC_KEY: ${{ secrets.LANGFUSE_PUBLIC_KEY }}
+          LANGFUSE_SECRET_KEY: ${{ secrets.LANGFUSE_SECRET_KEY }}
+          SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
+          SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          NEXTLAW_API_ORIGIN: ${{ secrets.NEXTLAW_API_ORIGIN }}
+          CLOUDFLARE_DEPLOY_URL: ${{ secrets.CLOUDFLARE_DEPLOY_URL }}
+        run: |
+          set_flag() {
+            local flag="$1"; shift
+            local missing=""
+            local value=""
+            for var in "$@"; do
+              eval "value=\${$var:-}"
+              if [ -z "$value" ]; then missing="$var"; break; fi
+            done
+            if [ -n "$missing" ]; then
+              echo "$flag=false" >> "$GITHUB_OUTPUT"
+              echo "[credential-gate] $flag: MISSING ($missing) — live job will be skipped"
+            else
+              echo "$flag=true" >> "$GITHUB_OUTPUT"
+              echo "[credential-gate] $flag: present"
+            fi
+          }
+          set_flag mem0 MEM0_API_KEY
+          set_flag langfuse LANGFUSE_PUBLIC_KEY LANGFUSE_SECRET_KEY
+          set_flag sentry SENTRY_DSN SENTRY_AUTH_TOKEN SENTRY_ORG SENTRY_PROJECT
+          set_flag evaluation ANTHROPIC_API_KEY
+          set_flag cloudflare CLOUDFLARE_API_TOKEN CLOUDFLARE_ACCOUNT_ID NEXTLAW_API_ORIGIN CLOUDFLARE_DEPLOY_URL
+
   mem0-live:
-    # Skip gracefully when the protected credential is not configured on the
-    # repo — PRs (especially forks) must not hard-fail on a job that can never
-    # succeed. The in-step checks still fail closed when the job does run with
-    # missing/invalid configuration.
-    if: ${{ secrets.MEM0_API_KEY != '' }}
+    needs: credential-gate
+    if: ${{ needs.credential-gate.outputs.mem0 == 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
@@ -41,7 +95,8 @@ jobs:
       - run: pytest -q compat/test_mem0_live_smoke.py
 
   langfuse-live:
-    if: ${{ secrets.LANGFUSE_PUBLIC_KEY != '' && secrets.LANGFUSE_SECRET_KEY != '' }}
+    needs: credential-gate
+    if: ${{ needs.credential-gate.outputs.langfuse == 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
@@ -68,7 +123,8 @@ jobs:
       - run: pytest -q compat/test_langfuse_live_smoke.py
 
   sentry-live:
-    if: ${{ secrets.SENTRY_DSN != '' && secrets.SENTRY_AUTH_TOKEN != '' && secrets.SENTRY_ORG != '' && secrets.SENTRY_PROJECT != '' }}
+    needs: credential-gate
+    if: ${{ needs.credential-gate.outputs.sentry == 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
@@ -99,7 +155,8 @@ jobs:
       - run: pytest -q compat/test_sentry_live_smoke.py
 
   evaluation-live:
-    if: ${{ secrets.ANTHROPIC_API_KEY != '' }}
+    needs: credential-gate
+    if: ${{ needs.credential-gate.outputs.evaluation == 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
     env:
@@ -125,7 +182,8 @@ jobs:
       - run: pytest -q compat/test_evaluation_live_smoke.py
 
   cloudflare-live-preflight:
-    if: ${{ secrets.CLOUDFLARE_API_TOKEN != '' && secrets.CLOUDFLARE_ACCOUNT_ID != '' && secrets.NEXTLAW_API_ORIGIN != '' && secrets.CLOUDFLARE_DEPLOY_URL != '' }}
+    needs: credential-gate
+    if: ${{ needs.credential-gate.outputs.cloudflare == 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     env:
