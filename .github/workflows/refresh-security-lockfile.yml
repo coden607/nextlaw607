@@ -1,0 +1,32 @@
+name: Refresh security lockfile (one-shot)
+on:
+  push:
+    branches: [fix/tanstack-security]
+permissions:
+  contents: write
+jobs:
+  refresh:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/tanstack-security
+          persist-credentials: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Regenerate real npm lockfile
+        run: |
+          npm install --package-lock-only --ignore-scripts --no-audit
+          npm ci --ignore-scripts
+          node -e "const p=require('./package-lock.json').packages['node_modules/@tanstack/react-start']; if(!p || Number(p.version.split('.')[2]) < 60 || !p.version.startsWith('1.168.')) process.exit(1)"
+      - name: Commit regenerated lockfile and remove temporary workflow
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm .github/workflows/refresh-security-lockfile.yml
+          git add package-lock.json
+          git commit -m "fix: regenerate secure TanStack lockfile"
+          git push origin HEAD:fix/tanstack-security
