@@ -59,3 +59,13 @@ Pack metadata lives in `packs/nextlaw607/`.
 ## Disclaimer
 
 Output is a drafting aid. Binding effect depends on capacity, consideration, statutory formalities, and a licensed attorney’s review under New York law. The terminal will not pretend a PDF is filed.
+
+
+## NY Criminal / Continuity OS roadmap
+
+The first deep legal-intelligence vertical is New York criminal law, implemented as a NextLaw607 application/pack on Continuity OS rather than a duplicate orchestration stack.
+
+- [Product requirements](docs/nextlaw607-ny-criminal-intelligence.prd.md)
+- [Architecture and migration decision](docs/nextlaw607-ny-criminal-continuity-architecture.md)
+
+Implementation starts with a keep/port/replace/retire inventory of the existing NextLaw code. Preserve useful product behavior; replace shared infrastructure only after parity is demonstrated. Canonical cross-agent skills remain in `coden607/skills`, with `compress-token-spend`, Jev routing, Software Factory and Legal War Room forming the default workflow.
