@@ -69,3 +69,8 @@ The first deep legal-intelligence vertical is New York criminal law, implemented
 - [Architecture and migration decision](docs/nextlaw607-ny-criminal-continuity-architecture.md)
 
 Implementation starts with a keep/port/replace/retire inventory of the existing NextLaw code. Preserve useful product behavior; replace shared infrastructure only after parity is demonstrated. Canonical cross-agent skills remain in `coden607/skills`, with `compress-token-spend`, Jev routing, Software Factory and Legal War Room forming the default workflow.
+
+
+### Agent/runtime enforcement
+
+The Continuity route is machine-checked, not memory-dependent. Run `sh scripts/continuity-preflight.sh`; pull requests also run the `continuity-contract` CI check. See [Continuity enforcement contract](docs/nextlaw607-continuity-enforcement.md).
