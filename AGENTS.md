@@ -393,3 +393,10 @@ For work on the NY criminal intelligence vertical, read these before planning or
 Treat this as a brownfield migration, not a rewrite. Inventory existing components as KEEP / PORT / REPLACE / RETIRE / SPIKE before replacing them. Continuity OS owns generic orchestration, routing/Jev, token optimization, generic RAG primitives, guardrails, second-brain and software-factory behavior; NextLaw607 owns legal-domain intelligence, authority normalization, temporal law, CitationFirewall, citator/treatment evidence, matter workflows and legal UX.
 
 For substantial legal implementation, load the smallest relevant canonical skills from `coden607/skills`. `compress-token-spend` is always on; use deterministic/Jev gates before expensive model calls where appropriate. `legal-war-room` governs legal-analysis quality. Do not weaken citation/provenance gates to save tokens.
+
+
+### Machine-enforced Continuity route
+
+Before substantive implementation, run `sh scripts/continuity-preflight.sh`. This is not optional merely because an agent has its own memory or instruction system. The portable source of truth is this repository contract plus `docs/nextlaw607-continuity-enforcement.md`.
+
+Do not remove, bypass, weaken, or mark optional the Continuity preflight, canonical skill route, CitationFirewall/provenance gates, or existing security/verification checks to make a change pass. The current Continuity OS remains the engineering entrypoint until the architecture's Continuity Base transition gate has verified parity; only then may the old dependency be retired through a reviewed PR.
