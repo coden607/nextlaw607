@@ -1,0 +1,24 @@
+name: Continuity Contract
+on:
+  pull_request:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  continuity-contract:
+    name: continuity-contract
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Enforce Continuity routing contract
+        run: sh scripts/continuity-preflight.sh
+      - name: Guard legal and agent invariants
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -q 'CitationFirewall' docs/nextlaw607-ny-criminal-intelligence.prd.md
+          grep -q 'legal-war-room' AGENTS.md
+          grep -q 'compress-token-spend' AGENTS.md
+          grep -q 'Continuity OS' README.md AGENTS.md
