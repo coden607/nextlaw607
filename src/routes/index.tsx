@@ -60,7 +60,7 @@ function Deck() {
             New York criminal law, verified before it speaks.
           </h1>
           <p className="mt-4 max-w-xl text-base leading-normal text-muted">
-            NextLaw607 is restricted to New York criminal law and criminal procedure. It analyzes CPL and Penal Law issues, suppression, discovery, speedy trial, pleas, sentencing, preservation, appeals, and post-conviction work with verified authority.
+            NextLaw607 centers New York criminal law and criminal procedure: CPL and Penal Law, suppression, discovery, speedy trial, pleas, sentencing, preservation, appeals, and post-conviction work. Intersecting law remains available when it materially affects the criminal matter or remedy.
           </p>
         </div>
         <Disclaimer />
