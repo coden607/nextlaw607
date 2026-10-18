@@ -51,11 +51,6 @@ function Research() {
   async function pullStatute() {
     setStatuteErr(null);
     const normalizedLaw = lawId.trim().toUpperCase();
-    if (!["CPL", "PEN"].includes(normalizedLaw)) {
-      setStatuteErr("NextLaw607 is restricted to criminal law. Use CPL or PEN.");
-      setStatuteText("");
-      return;
-    }
     const res = await fetchNyStatute({ data: { lawId: normalizedLaw, section } });
     if (!res.ok) {
       setStatuteErr(res.error);
@@ -206,7 +201,7 @@ function Research() {
       <section className="rounded-xl border border-border bg-surface p-5">
         <h2 className="font-display text-xl">NY Senate pull</h2>
         <p className="mt-1 text-sm text-muted">
-          Criminal-law source ids only: CPL and PEN. Constitutional criminal issues may also rely on verified federal and New York appellate authority.
+          Primary sources are CPL and PEN. Other New York codes remain available when they materially intersect a criminal matter — for example CVP (CPLR) for an applicable remedy such as habeas corpus.
         </p>
         <div className="mt-3 grid gap-3 sm:grid-cols-[1fr_1fr_auto]">
           <div>
