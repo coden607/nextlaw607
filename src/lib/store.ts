@@ -133,6 +133,8 @@ export const useCounsel = create<CounselState>()(
         if (state.matters.length === 0) {
           state.matters = [DEMO_MATTER];
           state.activeMatterId = DEMO_MATTER.id;
+        } else if (!state.matters.some((m) => m.id === state.activeMatterId)) {
+          state.activeMatterId = state.matters[0].id;
         }
       },
     },
