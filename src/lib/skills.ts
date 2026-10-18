@@ -116,19 +116,18 @@ export const SKILLS: SkillCard[] = [
   },
   {
     id: "critic-redteam",
-    name: "Opposing Counsel Red Team",
-    trigger: "critic, attack, enforceability, rewrite",
-    mandate: "Kill the draft or make it airtight. No courtesy.",
+    name: "Criminal Adversary Red Team",
+    trigger: "critic, attack, prosecution, rebuttal, preserve, rewrite",
+    mandate: "Attack the criminal analysis from the prosecution, trial-court, and appellate-review perspectives.",
     steps: [
-      "Formation defects: parties, authority to bind, consideration, SOF.",
-      "Ambiguity that opens parol evidence despite a merger clause.",
-      "Unenforceable restraints (BDO Seidman) and unclear indemnities (Hooper).",
-      "Missing DRL/FCA recitals in family instruments; missing CSSA math.",
-      "Forum/law clauses that fail 5-1401/5-1402 thresholds without a relation recital.",
-      "Residential habitability waivers (void).",
+      "Challenge each element against admissible proof and the governing burden.",
+      "Test suppression theories for standing, factual predicates, attenuation, inevitable discovery, and preservation.",
+      "Audit CPL Article 245 and CPL 30.30 chronology against the record and verified authority.",
+      "Identify procedural bars, waiver, preservation, harmless-error, and standard-of-review problems.",
+      "Reject unsupported facts, invented authority, stale law, and conclusions that outrun the record.",
       "Score 0–100. Below 85 forces a rewrite loop.",
     ],
-    authorities: ["bdo-seidman", "hooper", "gol-5-701", "rpl-235-b"],
+    authorities: ["cpl-30-30", "cpl-245-20", "cpl-710-20", "cpl-710-40", "pl-15-05"],
   },
   {
     id: "courtlistener-mcp",
@@ -187,7 +186,7 @@ export const WORKFLOW = [
 ];
 
 export const CRIMINAL_SKILLS = SKILLS.filter((skill) =>
-  ["ny-criminal", "suppression-map", "citation-hygiene", "courtlistener-mcp"].includes(skill.id),
+  ["ny-criminal", "suppression-map", "citation-hygiene", "critic-redteam", "courtlistener-mcp"].includes(skill.id),
 );
 
 export function skillsPromptBlock(): string {
