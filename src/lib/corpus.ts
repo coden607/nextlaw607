@@ -866,12 +866,38 @@ export function corpusCitationsForTemplate(tmpl: ContractTemplate): Citation[] {
   ];
 }
 
+export const CRIMINAL_STATUTES = STATUTES.filter((s) => s.practice.includes("criminal"));
+export const CRIMINAL_CASES = CASES.filter((c) => c.practice.includes("criminal"));
+
+export function searchCriminalCorpus(q: string): { statutes: StatuteDoc[]; cases: CaseDoc[] } {
+  const n = q.trim().toLowerCase();
+  if (!n) return { statutes: CRIMINAL_STATUTES, cases: CRIMINAL_CASES };
+  const hit = (value: string) => value.toLowerCase().includes(n);
+  return {
+    statutes: CRIMINAL_STATUTES.filter(
+      (statute) =>
+        hit(statute.id) ||
+        hit(statute.title) ||
+        hit(statute.chapter) ||
+        hit(statute.section) ||
+        hit(statute.blackletter),
+    ),
+    cases: CRIMINAL_CASES.filter(
+      (opinion) =>
+        hit(opinion.id) ||
+        hit(opinion.name) ||
+        hit(opinion.bluebook) ||
+        hit(opinion.holding),
+    ),
+  };
+}
+
 export function corpusPromptBlock(): string {
-  const statuteLines = STATUTES.map(
+  const statuteLines = CRIMINAL_STATUTES.map(
     (s) =>
       `- ${s.chapter} § ${s.section} (${s.id}): ${s.title}. ${s.blackletter} Source: ${s.officialUrl}`,
   ).join("\n");
-  const caseLines = CASES.map(
+  const caseLines = CRIMINAL_CASES.map(
     (c) => `- ${c.bluebook} — ${c.holding} Source: ${c.officialUrl}`,
   ).join("\n");
   return `VERIFIED NEW YORK AUTHORITY BANK (cite ONLY these plus any live CourtListener hits provided):\n\nSTATUTES:\n${statuteLines}\n\nCASES:\n${caseLines}`;
