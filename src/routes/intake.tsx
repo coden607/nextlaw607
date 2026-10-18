@@ -10,13 +10,11 @@ import { PRACTICE_LABEL } from "@/lib/types";
 
 export const Route = createFileRoute("/intake")({ component: Intake });
 
-const AREAS = Object.keys(PRACTICE_LABEL) as PracticeArea[];
 
 function Intake() {
   const navigate = useNavigate();
   const upsert = useCounsel((s) => s.upsertMatter);
   const [caption, setCaption] = useState("");
-  const [practice, setPractice] = useState<PracticeArea>("contracts");
   const [county, setCounty] = useState("New York");
   const [partyA, setPartyA] = useState("");
   const [roleA, setRoleA] = useState("Defendant");
