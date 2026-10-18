@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Disclaimer } from "@/components/disclaimer";
 import { Badge } from "@/components/ui/badge";
-import { PERSONA, SKILLS, WORKFLOW } from "@/lib/skills";
+import { CRIMINAL_SKILLS, PERSONA, WORKFLOW } from "@/lib/skills";
 
 export const Route = createFileRoute("/playbook")({ component: Playbook });
 
