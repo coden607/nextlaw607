@@ -1,30 +1,50 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { CRIMINAL_CASES, CRIMINAL_STATUTES, corpusPromptBlock } from "./corpus.ts";
-import { ACTIVE_PRACTICE, isCriminalPractice, requireCriminalPractice } from "./criminal-scope.ts";
+import {
+  CRIMINAL_CASES,
+  CRIMINAL_STATUTES,
+  corpusPromptBlock,
+  searchCriminalCenteredCorpus,
+} from "./corpus.ts";
+import {
+  PRIMARY_PRACTICE,
+  isPrimaryCriminalPractice,
+  requireCriminalCenteredScope,
+} from "./criminal-scope.ts";
 import { CRIMINAL_TEMPLATES } from "./templates.ts";
 
-describe("criminal-only scope", () => {
-  it("accepts only criminal practice", () => {
-    assert.equal(ACTIVE_PRACTICE, "criminal");
-    assert.equal(requireCriminalPractice("criminal"), "criminal");
-    assert.equal(isCriminalPractice("criminal"), true);
-    assert.equal(isCriminalPractice("civil"), false);
-    assert.throws(() => requireCriminalPractice("family"), /restricted to New York criminal-law matters/);
+describe("criminal-centered scope", () => {
+  it("keeps criminal as the primary product practice", () => {
+    assert.equal(PRIMARY_PRACTICE, "criminal");
+    assert.equal(isPrimaryCriminalPractice("criminal"), true);
+    assert.equal(isPrimaryCriminalPractice("civil"), false);
+    assert.doesNotThrow(() => requireCriminalCenteredScope("criminal"));
   });
 
-  it("exposes only criminal templates and authority records", () => {
+  it("allows intersecting law only with an explicit criminal nexus", () => {
+    assert.doesNotThrow(() => requireCriminalCenteredScope("civil", true));
+    assert.throws(
+      () => requireCriminalCenteredScope("family"),
+      /criminal-centered/,
+    );
+  });
+
+  it("keeps primary templates and base authority criminal", () => {
     assert.ok(CRIMINAL_TEMPLATES.length > 0);
     assert.ok(CRIMINAL_TEMPLATES.every((item) => item.practice === "criminal"));
     assert.ok(CRIMINAL_STATUTES.length > 0);
-    assert.ok(CRIMINAL_STATUTES.every((item) => item.practice.includes("criminal")));
     assert.ok(CRIMINAL_CASES.length > 0);
-    assert.ok(CRIMINAL_CASES.every((item) => item.practice.includes("criminal")));
   });
 
-  it("builds the model authority prompt from criminal authorities only", () => {
-    const prompt = corpusPromptBlock();
+  it("includes CPLR habeas authority when the criminal context calls for it", () => {
+    const prompt = corpusPromptBlock("criminal detention habeas corpus CPLR Article 70");
     assert.match(prompt, /Criminal Procedure Law|Penal Law/);
-    assert.doesNotMatch(prompt, /Domestic Relations Law|General Obligations Law/);
+    assert.match(prompt, /Civil Practice Law and Rules § Article 70/);
+    assert.match(prompt, /Habeas corpus/);
+  });
+
+  it("finds matching collateral authority without making it the base corpus", () => {
+    const result = searchCriminalCenteredCorpus("CPLR habeas Article 70");
+    assert.ok(result.statutes.some((item) => item.id === "cplr-art-70"));
   });
 });
