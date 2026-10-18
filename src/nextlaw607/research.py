@@ -7,6 +7,11 @@ class LegalResearchRequest:
     question: str
     jurisdiction: str
     as_of_date: str | None = None
+    practice: str = "criminal"
+
+    def __post_init__(self) -> None:
+        if self.practice.strip().lower() != "criminal":
+            raise ValueError("NextLaw607 is restricted to criminal-law research")
 
 @dataclass(frozen=True)
 class VerifiedAuthority:
