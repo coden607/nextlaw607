@@ -1,4 +1,4 @@
-# Anticipated delivery train: next 26 PRs
+# Anticipated delivery train: 86 dependency-ordered PRs
 
 Dependency-ordered backlog for PRs following the current execution-safety slice. Each PR stays independently reviewable, preserves CitationFirewall/RLS/privacy gates, and uses deterministic/Jev routing before model spend when applicable.
 
@@ -76,6 +76,49 @@ These are PRs 27–56 in dependency order. Each feature is assigned to a Continu
 - Record only privacy-safe route/cost/latency metadata; no prompts, case facts, secrets, or privileged text.
 - CitationFirewall remains the sole authority-promotion boundary.
 - Merge only exact tested revisions after all required security/privacy/legal/CI/browser gates succeed.
+
+## Anticipated next 30 through Continuity OS — PRs 57–86
+
+57. Privilege/confidentiality classifier — deterministic labels and handling policy before retrieval/model use; never infer waiver.
+58. PII/secret minimization gate — redact or block unnecessary identifiers before model, tool, trace, or export boundaries.
+59. Tenant/matter isolation verifier — automated cross-user/cross-matter denial tests for memory, checkpoints, caches, and retrieval.
+60. Source-rights/provenance gate — source class, permitted use, attribution, hash, and retention policy required before ingestion.
+61. Ingestion quarantine/retry queue — malformed or unverifiable documents cannot reach production indexes.
+62. Embedding-version registry — model/version/dimension/hash recorded so mixed embeddings cannot silently corrupt retrieval.
+63. Deterministic index rebuild planner — Jev selects affected shards from source/version changes instead of full rebuilds.
+64. Offline retrieval A/B evaluator — compare rankers on gold queries before production routing changes.
+65. Query-intent benchmark — measure deterministic issue classification and escalation accuracy by NY-criminal task class.
+66. Matter chronology builder — normalized event ledger with provenance and conflict flags; facts remain user/record sourced.
+67. Deadline-calculation framework — deterministic date arithmetic with rule/version provenance and explicit assumptions.
+68. Standard-of-review resolver — court/posture-aware candidate classification with CitationFirewall verification before use.
+69. Burden-of-proof/production resolver — issue-specific burden map tied to verified statutes/cases and procedural posture.
+70. Remedy map generator — available/requested remedies, prerequisites, preservation, and authority gaps.
+71. Filing/service checklist engine — court-specific procedural checklist sourced from verified rules; no silent filing claims.
+72. Proposed-order generator — structured draft from granted/requested relief and verified procedural inputs.
+73. Exhibit indexer — stable exhibit IDs, hashes, provenance, duplicate detection, and page anchors.
+74. Fact-binder/declaration workspace — user-supplied facts mapped to supporting exhibits with contradiction flags.
+75. Citation-drift detector — revalidate previously used authorities when source text/status/version changes.
+76. Judge/court ruling-pattern research layer — public-opinion statistics only, source-backed, no personal profiling or speculative bias claims.
+77. Venue/jurisdiction resolver — deterministic threshold checks before substantive legal synthesis.
+78. NY/federal conflict resolver — Supremacy/preemption/incorporation and parallel-authority issue routing with verified sources.
+79. Procedural-posture classifier — Jev first pass from docket/events; ambiguous states require explicit user/record confirmation.
+80. Confidence calibration layer — distinguish retrieval confidence, authority status, factual completeness, and model synthesis uncertainty.
+81. Insufficient-authority UX — explain exactly which authority/fact gap blocked an answer without fabricating a fallback.
+82. Research work queue — resumable matter tasks, priority, dependencies, checkpoint state, and human-review status.
+83. Collaborative review/approval gate — reviewer signoff for citator uncertainty, high-risk drafts, and release-critical changes.
+84. Litigation packet exporter — reproducible memo/motion/authority table/exhibit index/audit manifest from one verified snapshot.
+85. Secure offline/PWA matter cache — encrypted local cache, explicit expiry, scope isolation, and no background authority promotion.
+86. Backup/restore + disaster-recovery drill — verified restore of metadata, indexes, audit manifests, and non-secret configuration.
+
+## Continuity execution policy for PRs 57–86
+
+- Run deterministic/Jev classification, privacy, scope, provenance, deadline, and index-impact decisions before model routing.
+- Reuse verified/cached authority context and recompute only affected artifacts.
+- Keep matter text out of routing telemetry; use opaque IDs and machine-readable reason codes.
+- Use isolated runs/checkpoints and second-brain state only as workflow memory, never as legal authority.
+- Require hooks at every model/tool/export boundary for privacy, authorization, source provenance, and CitationFirewall invariants.
+- Use Software Factory evidence to decide promotion: tests → adversarial checks → exact-head CI → review → merge.
+- Escalate model tier only when deterministic/local/economical paths cannot satisfy the declared capability requirement.
 
 ## Train rules
 
