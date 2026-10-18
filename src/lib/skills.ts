@@ -152,13 +152,13 @@ export const WORKFLOW = [
     id: "1-intake",
     title: "Matter intake",
     detail:
-      "Caption, county, parties with roles, practice area, objectives, and a fact narrative. Voice dictation allowed. Nothing is drafted until intake has a party on each side and a county.",
+      "Caption, county, defendant/prosecution roles, charges, procedural posture, objectives, and a fact narrative. Voice dictation allowed. Nothing is drafted until the criminal matter has the required core facts.",
   },
   {
     id: "2-issue",
     title: "Issue spot (Lead Partner)",
     detail:
-      "Planner Agent decomposes the legal matrix: elements, burdens, SOF, forum, statutory hooks (DRL/FCA/CPL/GOL), and the worst-case opposing argument.",
+      "Planner Agent decomposes charges, elements, burdens, CPL/PL hooks, suppression, discovery, speedy trial, preservation, and the strongest prosecution argument.",
   },
   {
     id: "3-harvest",
@@ -170,19 +170,19 @@ export const WORKFLOW = [
     id: "4-draft",
     title: "Instrument draft",
     detail:
-      "Executor fills a template with matter facts. Every Article cites at least one verified authority where a legal election is being made.",
+      "Executor fills a criminal-law template with matter facts. Every legal proposition must be tied to verified criminal authority or marked as needing authority.",
   },
   {
     id: "5-redteam",
     title: "Opposing Counsel audit",
     detail:
-      "Critic scores jurisdictional defects, missing DRL/FCA/GOL cites, unverified case names, and unenforceable clauses. Score < 85 forces rewrite.",
+      "Critic scores jurisdictional defects, missing CPL/PL hooks, suppression/discovery/preservation gaps, and unverified case names. Score < 85 forces rewrite.",
   },
   {
     id: "6-execute",
     title: "Execution checklist",
     detail:
-      "Signature capacity, notarial acknowledgment if real property, CSSA exhibits, so-order line, counterparts, and a human-attorney review gate. The terminal will not pretend the PDF is 'filed.'",
+      "Caption/docket verification, relief requested, supporting authority, exhibit/record references, service/filing checklist, and a human-attorney review gate. The terminal will not pretend a paper is filed.",
   },
 ];
 
