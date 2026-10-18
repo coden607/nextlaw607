@@ -8,9 +8,9 @@ import { Button } from "@/components/ui/button";
 import { Label, Textarea } from "@/components/ui/input";
 import { runTriad } from "@/lib/ai";
 import { searchOpinions } from "@/lib/courtlistener";
-import { CASES, STATUTES, corpusCitationsForTemplate } from "@/lib/corpus";
+import { CRIMINAL_CASES, CRIMINAL_STATUTES, corpusCitationsForTemplate } from "@/lib/corpus";
 import { newDraftId, useCounsel } from "@/lib/store";
-import { TEMPLATES, templateById } from "@/lib/templates";
+import { CRIMINAL_TEMPLATES, templateById } from "@/lib/templates";
 import type { TriadResult } from "@/lib/types";
 
 type DraftSearch = { template?: string };
@@ -30,19 +30,20 @@ function DraftDesk() {
   const upsert = useCounsel((s) => s.upsertMatter);
   const matter = matters.find((m) => m.id === activeId) ?? matters[0];
 
-  const [templateId, setTemplateId] = useState(initial ?? "ica");
+  const [templateId, setTemplateId] = useState(initial ?? CRIMINAL_TEMPLATES[0]?.id ?? "");
   const [extra, setExtra] = useState("");
   const [busy, setBusy] = useState(false);
   const [offline, setOffline] = useState(false);
   const [result, setResult] = useState<TriadResult | null>(null);
-  const tmpl = templateById(templateId) ?? TEMPLATES[0];
+  const tmpl = templateById(templateId) ?? CRIMINAL_TEMPLATES[0];
+  if (!tmpl) throw new Error("No criminal-law templates are configured.");
 
   const required = useMemo(
     () => ({
       statutes: tmpl.requiredStatutes
-        .map((id) => STATUTES.find((s) => s.id === id))
+        .map((id) => CRIMINAL_STATUTES.find((s) => s.id === id))
         .filter(Boolean),
-      cases: tmpl.requiredCases.map((id) => CASES.find((c) => c.id === id)).filter(Boolean),
+      cases: tmpl.requiredCases.map((id) => CRIMINAL_CASES.find((c) => c.id === id)).filter(Boolean),
     }),
     [tmpl],
   );
@@ -116,10 +117,9 @@ function DraftDesk() {
       <header className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
         <div>
           <Badge tone="associate">Instrument desk</Badge>
-          <h1 className="mt-3 font-display text-3xl tracking-tight">Draft a New York instrument</h1>
+          <h1 className="mt-3 font-display text-3xl tracking-tight">Draft a New York criminal-law instrument</h1>
           <p className="mt-2 max-w-2xl text-sm leading-normal text-muted">
-            The Associate fills a verified template. The Critic will not let a
-            missing GOL, DRL, or Hooper clause leave the building.
+            The Associate fills a criminal-law template using verified CPL, Penal Law, constitutional, and appellate authority. Non-criminal matters are outside scope.
           </p>
         </div>
         <Disclaimer compact />
@@ -129,7 +129,7 @@ function DraftDesk() {
         <aside className="rounded-xl border border-border bg-surface p-4">
           <Label>Template</Label>
           <div className="mt-2 flex flex-col gap-1">
-            {TEMPLATES.map((t) => (
+            {CRIMINAL_TEMPLATES.map((t) => (
               <button
                 key={t.id}
                 type="button"
@@ -178,7 +178,7 @@ function DraftDesk() {
                 className="mt-2"
                 value={extra}
                 onChange={(e) => setExtra(e.target.value)}
-                placeholder="Deal points, numbers, parenting calendar, carve-outs…"
+                placeholder="Charges, procedural posture, suppression facts, discovery, deadlines, relief requested…"
               />
             </div>
             <div className="mt-4 flex flex-wrap gap-2">
