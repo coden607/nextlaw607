@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import type { DraftRecord, Matter, PracticeArea } from "./types";
 import { isCriminalPractice, requireCriminalPractice } from "./criminal-scope";
+import type { DraftRecord, Matter, PracticeArea } from "./types";
 
 type CounselState = {
   matters: Matter[];
@@ -43,51 +43,6 @@ const DEMO_MATTER: Matter = {
   status: "intake",
   createdAt: now(),
   updatedAt: now(),
-};port { create } from "zustand";
-import { persist } from "zustand/middleware";
-import type { DraftRecord, Matter, PracticeArea } from "./types";
-import { isCriminalPractice, requireCriminalPractice } from "./criminal-scope";
-
-type CounselState = {
-  matters: Matter[];
-  drafts: DraftRecord[];
-  activeMatterId: string | null;
-  voiceOn: boolean;
-  setVoiceOn: (v: boolean) => void;
-  holoMode: boolean;
-  setHoloMode: (v: boolean) => void;
-  setActiveMatter: (id: string | null) => void;
-  upsertMatter: (m: Matter) => void;
-  deleteMatter: (id: string) => void;
-  addDraft: (d: DraftRecord) => void;
-  deleteDraft: (id: string) => void;
-  seedIfEmpty: () => void;
-};
-
-function now() {
-  return new Date().toISOString();
-}
-
-function id(prefix: string) {
-  return `${prefix}_${Math.random().toString(36).slice(2, 9)}`;
-}
-
-const DEMO_MATTER: Matter = {
-  id: "mat_demo607",
-  caption: "Avery v. Hale — parenting stipulation",
-  practice: "family",
-  parties: [
-    { role: "Plaintiff / Parent A", name: "Jordan Avery" },
-    { role: "Defendant / Parent B", name: "Casey Hale" },
-  ],
-  facts:
-    "Two children, ages 7 and 11, reside in Kings County. Parent A is the current residential parent. Parent B seeks an expanded 2-2-3 schedule and objects to a contemplated move to Albany County. Combined parental income is approximately $180,000. The parties want a so-ordered stipulation rather than a trial.",
-  objectives:
-    "Joint legal custody, a defined parenting calendar, a Tropea-aware relocation clause, and CSSA child support with statutory add-ons pro-rated.",
-  county: "Kings",
-  status: "intake",
-  createdAt: now(),
-  updatedAt: now(),
 };
 
 export const useCounsel = create<CounselState>()(
@@ -117,10 +72,20 @@ export const useCounsel = create<CounselState>()(
           activeMatterId: get().activeMatterId === mid ? null : get().activeMatterId,
         }),
       addDraft: (d) => set({ drafts: [d, ...get().drafts].slice(0, 40) }),
-      deleteDraft: (id) => set({ drafts: get().drafts.filter((d) => d.id !== id) }),
+      deleteDraft: (draftId) => set({ drafts: get().drafts.filter((d) => d.id !== draftId) }),
       seedIfEmpty: () => {
-        if (get().matters.length === 0) {
+        const criminalMatters = get().matters.filter((m) => isCriminalPractice(m.practice));
+        if (criminalMatters.length === 0) {
           set({ matters: [DEMO_MATTER], activeMatterId: DEMO_MATTER.id });
+        } else if (criminalMatters.length !== get().matters.length) {
+          const allowedIds = new Set(criminalMatters.map((m) => m.id));
+          set({
+            matters: criminalMatters,
+            drafts: get().drafts.filter((d) => allowedIds.has(d.matterId)),
+            activeMatterId: allowedIds.has(get().activeMatterId ?? "")
+              ? get().activeMatterId
+              : criminalMatters[0].id,
+          });
         }
       },
     }),
@@ -129,7 +94,8 @@ export const useCounsel = create<CounselState>()(
       onRehydrateStorage: () => (state) => {
         if (!state) return;
         state.matters = state.matters.filter((m) => isCriminalPractice(m.practice));
-        state.drafts = state.drafts.filter((d) => state.matters.some((m) => m.id === d.matterId));
+        const allowedIds = new Set(state.matters.map((m) => m.id));
+        state.drafts = state.drafts.filter((d) => allowedIds.has(d.matterId));
         if (state.matters.length === 0) {
           state.matters = [DEMO_MATTER];
           state.activeMatterId = DEMO_MATTER.id;
@@ -146,8 +112,8 @@ export function newMatter(partial: Partial<Matter> & { practice: PracticeArea })
   const t = now();
   return {
     id: id("mat"),
-    caption: partial.caption ?? "Untitled matter",
-    practice: partial.practice,
+    caption: partial.caption ?? "Untitled criminal matter",
+    practice: "criminal",
     parties: partial.parties ?? [],
     facts: partial.facts ?? "",
     objectives: partial.objectives ?? "",
