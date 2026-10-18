@@ -1,6 +1,52 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { DraftRecord, Matter, PracticeArea } from "./types";
+import { isCriminalPractice, requireCriminalPractice } from "./criminal-scope";
+
+type CounselState = {
+  matters: Matter[];
+  drafts: DraftRecord[];
+  activeMatterId: string | null;
+  voiceOn: boolean;
+  setVoiceOn: (v: boolean) => void;
+  holoMode: boolean;
+  setHoloMode: (v: boolean) => void;
+  setActiveMatter: (id: string | null) => void;
+  upsertMatter: (m: Matter) => void;
+  deleteMatter: (id: string) => void;
+  addDraft: (d: DraftRecord) => void;
+  deleteDraft: (id: string) => void;
+  seedIfEmpty: () => void;
+};
+
+function now() {
+  return new Date().toISOString();
+}
+
+function id(prefix: string) {
+  return `${prefix}_${Math.random().toString(36).slice(2, 9)}`;
+}
+
+const DEMO_MATTER: Matter = {
+  id: "mat_demo607",
+  caption: "People v. Rivera — suppression workup",
+  practice: "criminal",
+  parties: [
+    { role: "Defendant", name: "Alex Rivera" },
+    { role: "Prosecution", name: "People of the State of New York" },
+  ],
+  facts:
+    "Demo criminal matter involving a street stop, search, arrest, and custodial questioning. Dates, charges, discovery status, and hearing posture must be confirmed from the record before use.",
+  objectives:
+    "Map suppression issues, CPL Article 245 discovery, CPL 30.30 timing, preservation, and verified controlling authority.",
+  county: "New York",
+  status: "intake",
+  createdAt: now(),
+  updatedAt: now(),
+};port { create } from "zustand";
+import { persist } from "zustand/middleware";
+import type { DraftRecord, Matter, PracticeArea } from "./types";
+import { isCriminalPractice, requireCriminalPractice } from "./criminal-scope";
 
 type CounselState = {
   matters: Matter[];
@@ -55,13 +101,15 @@ export const useCounsel = create<CounselState>()(
       holoMode: true,
       setHoloMode: (v) => set({ holoMode: v }),
       setActiveMatter: (id) => set({ activeMatterId: id }),
-      upsertMatter: (m) =>
+      upsertMatter: (m) => {
+        requireCriminalPractice(m.practice);
         set({
           matters: get().matters.some((x) => x.id === m.id)
             ? get().matters.map((x) => (x.id === m.id ? m : x))
             : [m, ...get().matters],
           activeMatterId: m.id,
-        }),
+        });
+      },
       deleteMatter: (mid) =>
         set({
           matters: get().matters.filter((m) => m.id !== mid),
@@ -80,6 +128,8 @@ export const useCounsel = create<CounselState>()(
       name: "nextlaw607",
       onRehydrateStorage: () => (state) => {
         if (!state) return;
+        state.matters = state.matters.filter((m) => isCriminalPractice(m.practice));
+        state.drafts = state.drafts.filter((d) => state.matters.some((m) => m.id === d.matterId));
         if (state.matters.length === 0) {
           state.matters = [DEMO_MATTER];
           state.activeMatterId = DEMO_MATTER.id;
@@ -90,6 +140,7 @@ export const useCounsel = create<CounselState>()(
 );
 
 export function newMatter(partial: Partial<Matter> & { practice: PracticeArea }): Matter {
+  requireCriminalPractice(partial.practice);
   const t = now();
   return {
     id: id("mat"),
