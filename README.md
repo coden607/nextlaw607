@@ -1,6 +1,6 @@
 # NextLaw607
 
-New York criminal-law research and drafting terminal. It is intentionally restricted to criminal law and criminal procedure.
+New York criminal-law research and drafting terminal. Criminal law and criminal procedure are the primary product surfaces.
 
 Not a law firm. Not legal advice. A human New York attorney must review anything before execution or filing.
 
@@ -13,7 +13,7 @@ Not a law firm. Not legal advice. A human New York attorney must review anything
 - **Playbook** — persona, skills, MCP gateway, and the six-step workflow.
 - **Stack** — Cole Medin’s 2026 AI-first stack mapped onto this counsel terminal.
 
-Default scope: New York criminal law and criminal procedure only. Federal constitutional criminal authority is included where it governs New York criminal proceedings. Hierarchy is Court of Appeals → the relevant Appellate Division → other departments (persuasive) → trial courts, with SCOTUS/Second Circuit authority applied where controlling.
+Default scope: New York criminal law and criminal procedure. Intersecting authority remains available when it materially governs a criminal issue or remedy — including relevant CPLR, constitutional, DRL/FCA, administrative, and other law. Federal constitutional criminal authority is included where it governs New York criminal proceedings. Hierarchy is Court of Appeals → the relevant Appellate Division → other departments (persuasive) → trial courts, with SCOTUS/Second Circuit authority applied where controlling.
 
 ## Zero-hallucination rule
 
