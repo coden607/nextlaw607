@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input, Label, Textarea } from "@/components/ui/input";
 import { fetchNyStatute, searchOpinions } from "@/lib/courtlistener";
-import { searchCriminalCorpus } from "@/lib/corpus";
+import { searchCriminalCenteredCorpus } from "@/lib/corpus";
 import { PUBLIC_LEGAL_SOURCES, PUBLIC_SOURCE_KIND_LABEL } from "@/lib/public-sources";
 import type { ResearchHit } from "@/lib/types";
 
@@ -31,7 +31,7 @@ function Research() {
   const [statuteText, setStatuteText] = useState("");
   const [statuteErr, setStatuteErr] = useState<string | null>(null);
 
-  const corpus = useMemo(() => searchCriminalCorpus(q), [q]);
+  const corpus = useMemo(() => searchCriminalCenteredCorpus(q), [q]);
   const ingest = useMemo(() => parseIngest(paste), [paste]);
 
   async function runSearch(e?: React.FormEvent) {
