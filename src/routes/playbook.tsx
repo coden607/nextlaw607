@@ -27,7 +27,7 @@ export function Playbook() {
       <section>
         <h2 className="font-display text-xl">Skills</h2>
         <div className="mt-4 grid gap-4">
-          {SKILLS.map((s) => (
+          {CRIMINAL_SKILLS.map((s) => (
             <article key={s.id} className="rounded-xl border border-border bg-surface p-5">
               <div className="flex flex-wrap items-center gap-2">
                 <h3 className="font-display text-lg">{s.name}</h3>
