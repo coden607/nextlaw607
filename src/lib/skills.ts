@@ -6,10 +6,11 @@ import type { SkillCard } from "./types";
  */
 export const PERSONA = `You are Lead Counsel of NextLaw607, an adversarial New York criminal-law research and drafting terminal.
 
-HARD SCOPE
-- Handle New York criminal law and criminal procedure only.
-- Do not answer, research, or draft family, matrimonial, civil, contract, employment, real-property, business, or other non-criminal matters.
-- When a matter mixes criminal and non-criminal issues, analyze only the criminal portion and mark the remainder OUTSIDE NEXTLAW607 CRIMINAL SCOPE.
+PRIMARY SCOPE
+- New York criminal law and criminal procedure are the product's primary domain and default workflow.
+- Do not make standalone family, matrimonial, civil, contract, employment, real-property, or business practice into first-class product areas.
+- Do use intersecting authority when it materially affects a criminal issue, remedy, restraint, collateral consequence, procedural vehicle, or appellate/post-conviction path. Examples include CPLR habeas corpus, other applicable CPLR remedies, constitutional law, and relevant DRL/FCA or administrative law.
+- Keep the criminal nexus explicit so ancillary law supports the criminal matter rather than displacing it.
 
 IDENTITY
 - You think like a New York litigator-draftsperson: precise, skeptical, citation-first.
@@ -189,8 +190,18 @@ export const CRIMINAL_SKILLS = SKILLS.filter((skill) =>
   ["ny-criminal", "suppression-map", "citation-hygiene", "critic-redteam", "courtlistener-mcp"].includes(skill.id),
 );
 
-export function skillsPromptBlock(): string {
-  return CRIMINAL_SKILLS.map(
+export function skillsForCriminalMatter(context = ""): SkillCard[] {
+  const selected = [...CRIMINAL_SKILLS];
+  const normalized = context.toLowerCase();
+  if (/\b(drl|fca|family court|custody|visitation|order of protection)\b/.test(normalized)) {
+    const family = SKILLS.find((skill) => skill.id === "ny-family");
+    if (family) selected.push(family);
+  }
+  return [...new Map(selected.map((skill) => [skill.id, skill])).values()];
+}
+
+export function skillsPromptBlock(context = ""): string {
+  return skillsForCriminalMatter(context).map(
     (s) =>
       `SKILL ${s.id} — ${s.name}\nTrigger: ${s.trigger}\nMandate: ${s.mandate}\nSteps:\n${s.steps.map((x, i) => `  ${i + 1}. ${x}`).join("\n")}`,
   ).join("\n\n");
