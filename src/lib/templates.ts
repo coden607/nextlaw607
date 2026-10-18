@@ -469,6 +469,8 @@ Dated: {{effectiveDate}}
   },
 ];
 
+export const CRIMINAL_TEMPLATES = TEMPLATES.filter((t) => t.practice === "criminal");
+
 export function templateById(id: string) {
-  return TEMPLATES.find((t) => t.id === id);
+  return CRIMINAL_TEMPLATES.find((t) => t.id === id);
 }
