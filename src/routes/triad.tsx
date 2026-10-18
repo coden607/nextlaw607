@@ -39,7 +39,7 @@ function TriadPage() {
   const addDraft = useCounsel((s) => s.addDraft);
   const voiceOn = useCounsel((s) => s.voiceOn);
   const [prompt, setPrompt] = useState(
-    "Attack and then rebuild the pending instrument. Identify every missing DRL, FCA, GOL, or CPL hook.",
+    "Attack the criminal-law workup. Identify missing CPL or Penal Law hooks, suppression issues, discovery defects, speedy-trial issues, preservation gaps, and unverified authority.",
   );
   const [busy, setBusy] = useState(false);
   const [listening, setListening] = useState(false);
@@ -192,7 +192,7 @@ function TriadPage() {
       ) : (
         <div className="grid gap-4 md:grid-cols-3">
           {[
-            ["01", "Lead Partner", "Decompose standing, forum, SOF, elements, and the worst opposing argument."],
+            ["01", "Lead Partner", "Decompose charges, elements, burdens, procedural posture, suppression, discovery, preservation, and the strongest prosecution argument."],
             ["02", "Associate", "Harvest Court of Appeals and the relevant Appellate Division. Fill the instrument."],
             ["03", "Opposing Counsel", "Reject unverified cites. Score below 85 forces rewrite."],
           ].map(([n, t, d]) => (
