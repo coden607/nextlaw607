@@ -5,9 +5,9 @@ import { Disclaimer } from "@/components/disclaimer";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { CASES, STATUTES } from "@/lib/corpus";
+import { CRIMINAL_CASES, CRIMINAL_STATUTES } from "@/lib/corpus";
 import { useCounsel } from "@/lib/store";
-import { TEMPLATES } from "@/lib/templates";
+import { CRIMINAL_TEMPLATES } from "@/lib/templates";
 import { PRACTICE_LABEL } from "@/lib/types";
 import { cn } from "@/lib/cn";
 
@@ -23,8 +23,8 @@ function Deck() {
   const holoMode = useCounsel((s) => s.holoMode);
   const latest = drafts[0];
   const authority = useMemo(() => {
-    const i = new Date().getDate() % CASES.length;
-    return CASES[i];
+    const i = new Date().getDate() % CRIMINAL_CASES.length;
+    return CRIMINAL_CASES[i];
   }, []);
 
   function runCommand(raw: string) {
@@ -57,13 +57,10 @@ function Deck() {
         <div>
           <Badge tone={holoMode ? "holo" : "accent"}>Zero-hallucination mandate</Badge>
           <h1 className={cn("mt-4 font-display text-4xl leading-tight tracking-tight md:text-5xl", holoMode && "holo-flicker")}>
-            The counsel terminal that will not invent a citation.
+            New York criminal law, verified before it speaks.
           </h1>
           <p className="mt-4 max-w-xl text-base leading-normal text-muted">
-            NextLaw607 drafts New York instruments, harvests binding Court of
-            Appeals and Appellate Division authority, and then attacks its own
-            work as opposing counsel. Built for DRL §§ 70/240, FCA Article 6,
-            CPL, the Penal Law, and the General Obligations Law.
+            NextLaw607 is restricted to New York criminal law and criminal procedure. It analyzes CPL and Penal Law issues, suppression, discovery, speedy trial, pleas, sentencing, preservation, appeals, and post-conviction work with verified authority.
           </p>
         </div>
         <Disclaimer />
@@ -90,7 +87,7 @@ function Deck() {
         <Input
           value={cmd}
           onChange={(e) => setCmd(e.target.value)}
-          placeholder="draft ica · research best interests · cite DRL 70 · triad"
+          placeholder="research CPL 30.30 · draft suppression motion · cite CPL 245 · triad"
           className={cn("border-0 bg-transparent font-mono", holoMode && "placeholder:text-cyan-400/40 text-cyan-100")}
           aria-label="Counsel command"
         />
@@ -118,7 +115,7 @@ function Deck() {
             role: "Opposing Counsel",
             tone: holoMode ? ("holo" as const) : ("critic" as const),
             icon: Shield,
-            copy: "Red-team filter. Missing DRL/FCA hooks, unverified cites, and Hooper-unclear fee clauses force an automated rewrite.",
+            copy: "Red-team filter. Missing CPL/PL hooks, suppression gaps, preservation defects, and unverified citations force an automated rewrite.",
           },
         ].map((a) => (
           <article
@@ -203,11 +200,11 @@ function Deck() {
         <div className="flex items-end justify-between gap-3">
           <h2 className="font-display text-xl">Instrument desk</h2>
           <p className={cn("font-mono text-[11px] uppercase tracking-wider text-subtle", holoMode && "text-cyan-400/60")}>
-            {STATUTES.length} statutes · {CASES.length} binding cases
+            {CRIMINAL_STATUTES.length} statutes · {CRIMINAL_CASES.length} criminal-law cases
           </p>
         </div>
         <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {TEMPLATES.map((t) => (
+          {CRIMINAL_TEMPLATES.map((t) => (
             <button
               key={t.id}
               type="button"
