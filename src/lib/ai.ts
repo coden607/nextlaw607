@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { CASES, STATUTES, corpusPromptBlock } from "./corpus";
 import { PERSONA, skillsPromptBlock } from "./skills";
 import { CRIMINAL_TEMPLATES, templateById } from "./templates";
-import { requireCriminalPractice } from "./criminal-scope";
+import { requireCriminalCenteredScope } from "./criminal-scope";
 import type { PracticeArea, TriadResult } from "./types";
 
 type CounselInput = {
@@ -18,6 +18,7 @@ type CounselInput = {
   liveAuthorities?: string;
   priorDraft?: string;
   criticNotes?: string[];
+  criminalNexus?: boolean;
 };
 
 function extractJson(text: string): unknown {
@@ -30,7 +31,7 @@ function extractJson(text: string): unknown {
 }
 
 function fallbackTriad(input: CounselInput): TriadResult {
-  requireCriminalPractice(input.practice);
+  requireCriminalCenteredScope(input.practice, input.criminalNexus ?? false);
   const tmpl = templateById(input.templateId ?? "") ?? CRIMINAL_TEMPLATES[0];
   if (!tmpl) throw new Error("No criminal-law templates are configured.");
   const partyA = input.parties[0]?.name ?? "Party A";
@@ -148,12 +149,12 @@ async function grokJson(system: string, user: string): Promise<string> {
   return body.choices[0]?.message.content ?? "";
 }
 
-function systemPrompt(): string {
+function systemPrompt(context: string): string {
   return `${PERSONA}
 
-${skillsPromptBlock()}
+${skillsPromptBlock(context)}
 
-${corpusPromptBlock()}
+${corpusPromptBlock(context)}
 
 OUTPUT CONTRACT
 Return ONLY a JSON object with this shape:
@@ -177,13 +178,13 @@ Return ONLY a JSON object with this shape:
     "memo": string
   }
 }
-Scope restriction: handle New York criminal law and criminal procedure only. Do not answer, draft, or research family, civil, contract, employment, real-property, or other non-criminal matters. For mixed matters, address only the criminal-law issues and identify the rest as outside scope.\nThe draft.body is the full instrument in plain text, suitable for execution after human review. Use NY citation form. Score < 85 if any citation is unverified or a required statute is missing.`;
+Primary scope: New York criminal law and criminal procedure. Use CPLR, DRL/FCA, constitutional, administrative, or other non-criminal authority when it materially governs a criminal issue, remedy, restraint, collateral consequence, or procedural vehicle. Do not turn unrelated family/civil/business questions into primary product workflows.\nThe draft.body is the full instrument in plain text, suitable for execution after human review. Use NY citation form. Score < 85 if any citation is unverified or a required statute is missing.`;
 }
 
 export const runTriad = createServerFn({ method: "POST" })
   .validator((input: CounselInput) => input)
   .handler(async ({ data }) => {
-    requireCriminalPractice(data.practice);
+    requireCriminalCenteredScope(data.practice, data.criminalNexus ?? false);
     const tmpl = templateById(data.templateId ?? "");
     const user = [
       `MODE: ${data.mode}`,
@@ -204,7 +205,7 @@ export const runTriad = createServerFn({ method: "POST" })
       .join("\n\n");
 
     try {
-      const text = await grokJson(systemPrompt(), user);
+      const text = await grokJson(systemPrompt(user), user);
       const parsed = parseTriad(extractJson(text));
       return { ok: true as const, result: parsed, offline: false };
     } catch (err) {
