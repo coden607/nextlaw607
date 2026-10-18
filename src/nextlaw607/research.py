@@ -7,6 +7,14 @@ class LegalResearchRequest:
     question: str
     jurisdiction: str
     as_of_date: str | None = None
+    practice: str = "criminal"
+    criminal_nexus: bool = False
+
+    def __post_init__(self) -> None:
+        if self.practice.strip().lower() != "criminal" and not self.criminal_nexus:
+            raise ValueError(
+                "NextLaw607 is criminal-centered; ancillary law requires a material criminal nexus"
+            )
 
 @dataclass(frozen=True)
 class VerifiedAuthority:

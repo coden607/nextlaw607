@@ -4,8 +4,6 @@
   "template": "generic",
   "version": "0.2.0",
   "skills": [
-    "ny-contract",
-    "ny-family",
     "ny-criminal",
     "citation-hygiene",
     "critic-redteam",
@@ -15,10 +13,17 @@
     "courtlistener-v4",
     "nysenate-open-legislation"
   ],
-  "agents": ["planner", "executor", "critic"],
+  "agents": [
+    "planner",
+    "executor",
+    "critic"
+  ],
   "guardrails": [
     "no_fabricated_citations",
     "unverified_authority_fail_closed"
   ],
-  "knowledge": ["ny-statute-bank", "ny-court-of-appeals-bank"]
+  "knowledge": [
+    "ny-criminal-statute-bank",
+    "ny-criminal-appellate-bank"
+  ]
 }

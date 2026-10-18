@@ -153,6 +153,19 @@ export const STATUTES: StatuteDoc[] = [
     practice: ["contracts"],
   },
   {
+    id: "cplr-art-70",
+    lawId: "CVP",
+    section: "Article 70",
+    title: "Habeas corpus",
+    chapter: "Civil Practice Law and Rules",
+    blackletter:
+      "CPLR Article 70 provides the New York special proceeding for habeas corpus, including petitions challenging unlawful imprisonment or other restraint on liberty and the procedures governing issuance, return, hearing, determination, appeal, and redetention.",
+    practiceNotes:
+      "Although codified in the CPLR, Article 70 can be a criminal-law remedy when the challenged restraint arises from criminal custody or detention. Verify the precise procedural vehicle, custody status, prior determinations, and any more specific criminal post-conviction remedy before relying on it.",
+    officialUrl: "https://www.nysenate.gov/legislation/laws/CVP/A70",
+    practice: ["criminal", "civil"],
+  },
+  {
     id: "cplr-3211",
     lawId: "CVP",
     section: "3211",
@@ -866,13 +879,84 @@ export function corpusCitationsForTemplate(tmpl: ContractTemplate): Citation[] {
   ];
 }
 
-export function corpusPromptBlock(): string {
-  const statuteLines = STATUTES.map(
+export const CRIMINAL_STATUTES = STATUTES.filter((s) => s.practice.includes("criminal"));
+export const CRIMINAL_CASES = CASES.filter((c) => c.practice.includes("criminal"));
+
+function uniqueById<T extends { id: string }>(items: T[]): T[] {
+  return [...new Map(items.map((item) => [item.id, item])).values()];
+}
+
+function ancillaryPractices(context: string): Set<string> {
+  const n = context.toLowerCase();
+  const practices = new Set<string>();
+  if (/\b(cplr|cvp|habeas|writ|article\s+70)\b/.test(n)) practices.add("civil");
+  if (/\b(drl|fca|family court|custody|visitation|order of protection)\b/.test(n)) practices.add("family");
+  return practices;
+}
+
+export function searchCriminalCenteredCorpus(q: string): { statutes: StatuteDoc[]; cases: CaseDoc[] } {
+  const n = q.trim().toLowerCase();
+  if (!n) return { statutes: CRIMINAL_STATUTES, cases: CRIMINAL_CASES };
+  const terms = n.split(/[^a-z0-9.]+/).filter((term) => term.length >= 3);
+  const hit = (value: string) => terms.some((term) => value.toLowerCase().includes(term));
+  return {
+    statutes: uniqueById([
+      ...CRIMINAL_STATUTES.filter(
+        (statute) =>
+          hit(statute.id) ||
+          hit(statute.title) ||
+          hit(statute.chapter) ||
+          hit(statute.section) ||
+          hit(statute.blackletter) ||
+          hit(statute.lawId),
+      ),
+      ...STATUTES.filter(
+        (statute) =>
+          !statute.practice.includes("criminal") &&
+          (hit(statute.id) ||
+            hit(statute.title) ||
+            hit(statute.chapter) ||
+            hit(statute.section) ||
+            hit(statute.blackletter) ||
+            hit(statute.lawId)),
+      ),
+    ]),
+    cases: uniqueById([
+      ...CRIMINAL_CASES.filter(
+        (opinion) =>
+          hit(opinion.id) ||
+          hit(opinion.name) ||
+          hit(opinion.bluebook) ||
+          hit(opinion.holding),
+      ),
+      ...CASES.filter(
+        (opinion) =>
+          !opinion.practice.includes("criminal") &&
+          (hit(opinion.id) ||
+            hit(opinion.name) ||
+            hit(opinion.bluebook) ||
+            hit(opinion.holding)),
+      ),
+    ]),
+  };
+}
+
+export function corpusPromptBlock(context = ""): string {
+  const ancillary = ancillaryPractices(context);
+  const statutes = uniqueById([
+    ...CRIMINAL_STATUTES,
+    ...STATUTES.filter((s) => s.practice.some((practice) => ancillary.has(practice))),
+  ]);
+  const cases = uniqueById([
+    ...CRIMINAL_CASES,
+    ...CASES.filter((c) => c.practice.some((practice) => ancillary.has(practice))),
+  ]);
+  const statuteLines = statutes.map(
     (s) =>
       `- ${s.chapter} § ${s.section} (${s.id}): ${s.title}. ${s.blackletter} Source: ${s.officialUrl}`,
   ).join("\n");
-  const caseLines = CASES.map(
+  const caseLines = cases.map(
     (c) => `- ${c.bluebook} — ${c.holding} Source: ${c.officialUrl}`,
   ).join("\n");
-  return `VERIFIED NEW YORK AUTHORITY BANK (cite ONLY these plus any live CourtListener hits provided):\n\nSTATUTES:\n${statuteLines}\n\nCASES:\n${caseLines}`;
+  return `VERIFIED NEW YORK CRIMINAL-CENTERED AUTHORITY BANK (criminal authority first; intersecting authority included only when the matter context calls for it; cite ONLY these plus any verified live hits provided):\n\nSTATUTES:\n${statuteLines}\n\nCASES:\n${caseLines}`;
 }

@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import { isPrimaryCriminalPractice, requireCriminalCenteredScope } from "./criminal-scope";
 import type { DraftRecord, Matter, PracticeArea } from "./types";
 
 type CounselState = {
@@ -28,17 +29,17 @@ function id(prefix: string) {
 
 const DEMO_MATTER: Matter = {
   id: "mat_demo607",
-  caption: "Avery v. Hale — parenting stipulation",
-  practice: "family",
+  caption: "People v. Rivera — suppression workup",
+  practice: "criminal",
   parties: [
-    { role: "Plaintiff / Parent A", name: "Jordan Avery" },
-    { role: "Defendant / Parent B", name: "Casey Hale" },
+    { role: "Defendant", name: "Alex Rivera" },
+    { role: "Prosecution", name: "People of the State of New York" },
   ],
   facts:
-    "Two children, ages 7 and 11, reside in Kings County. Parent A is the current residential parent. Parent B seeks an expanded 2-2-3 schedule and objects to a contemplated move to Albany County. Combined parental income is approximately $180,000. The parties want a so-ordered stipulation rather than a trial.",
+    "Demo criminal matter involving a street stop, search, arrest, and custodial questioning. Dates, charges, discovery status, and hearing posture must be confirmed from the record before use.",
   objectives:
-    "Joint legal custody, a defined parenting calendar, a Tropea-aware relocation clause, and CSSA child support with statutory add-ons pro-rated.",
-  county: "Kings",
+    "Map suppression issues, CPL Article 245 discovery, CPL 30.30 timing, preservation, and verified controlling authority.",
+  county: "New York",
   status: "intake",
   createdAt: now(),
   updatedAt: now(),
@@ -55,13 +56,15 @@ export const useCounsel = create<CounselState>()(
       holoMode: true,
       setHoloMode: (v) => set({ holoMode: v }),
       setActiveMatter: (id) => set({ activeMatterId: id }),
-      upsertMatter: (m) =>
+      upsertMatter: (m) => {
+        requireCriminalCenteredScope(m.practice);
         set({
           matters: get().matters.some((x) => x.id === m.id)
             ? get().matters.map((x) => (x.id === m.id ? m : x))
             : [m, ...get().matters],
           activeMatterId: m.id,
-        }),
+        });
+      },
       deleteMatter: (mid) =>
         set({
           matters: get().matters.filter((m) => m.id !== mid),
@@ -69,10 +72,20 @@ export const useCounsel = create<CounselState>()(
           activeMatterId: get().activeMatterId === mid ? null : get().activeMatterId,
         }),
       addDraft: (d) => set({ drafts: [d, ...get().drafts].slice(0, 40) }),
-      deleteDraft: (id) => set({ drafts: get().drafts.filter((d) => d.id !== id) }),
+      deleteDraft: (draftId) => set({ drafts: get().drafts.filter((d) => d.id !== draftId) }),
       seedIfEmpty: () => {
-        if (get().matters.length === 0) {
+        const criminalMatters = get().matters.filter((m) => isPrimaryCriminalPractice(m.practice));
+        if (criminalMatters.length === 0) {
           set({ matters: [DEMO_MATTER], activeMatterId: DEMO_MATTER.id });
+        } else if (criminalMatters.length !== get().matters.length) {
+          const allowedIds = new Set(criminalMatters.map((m) => m.id));
+          set({
+            matters: criminalMatters,
+            drafts: get().drafts.filter((d) => allowedIds.has(d.matterId)),
+            activeMatterId: allowedIds.has(get().activeMatterId ?? "")
+              ? get().activeMatterId
+              : criminalMatters[0].id,
+          });
         }
       },
     }),
@@ -80,9 +93,14 @@ export const useCounsel = create<CounselState>()(
       name: "nextlaw607",
       onRehydrateStorage: () => (state) => {
         if (!state) return;
+        state.matters = state.matters.filter((m) => isPrimaryCriminalPractice(m.practice));
+        const allowedIds = new Set(state.matters.map((m) => m.id));
+        state.drafts = state.drafts.filter((d) => allowedIds.has(d.matterId));
         if (state.matters.length === 0) {
           state.matters = [DEMO_MATTER];
           state.activeMatterId = DEMO_MATTER.id;
+        } else if (!state.matters.some((m) => m.id === state.activeMatterId)) {
+          state.activeMatterId = state.matters[0].id;
         }
       },
     },
@@ -90,11 +108,12 @@ export const useCounsel = create<CounselState>()(
 );
 
 export function newMatter(partial: Partial<Matter> & { practice: PracticeArea }): Matter {
+  requireCriminalCenteredScope(partial.practice);
   const t = now();
   return {
     id: id("mat"),
-    caption: partial.caption ?? "Untitled matter",
-    practice: partial.practice,
+    caption: partial.caption ?? "Untitled criminal matter",
+    practice: "criminal",
     parties: partial.parties ?? [],
     facts: partial.facts ?? "",
     objectives: partial.objectives ?? "",
