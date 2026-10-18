@@ -1,7 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
 import { CASES, STATUTES, corpusPromptBlock } from "./corpus";
 import { PERSONA, skillsPromptBlock } from "./skills";
-import { TEMPLATES } from "./templates";
+import { CRIMINAL_TEMPLATES, templateById } from "./templates";
+import { requireCriminalPractice } from "./criminal-scope";
 import type { PracticeArea, TriadResult } from "./types";
 
 type CounselInput = {
@@ -29,7 +30,9 @@ function extractJson(text: string): unknown {
 }
 
 function fallbackTriad(input: CounselInput): TriadResult {
-  const tmpl = TEMPLATES.find((t) => t.id === input.templateId) ?? TEMPLATES[0];
+  requireCriminalPractice(input.practice);
+  const tmpl = templateById(input.templateId ?? "") ?? CRIMINAL_TEMPLATES[0];
+  if (!tmpl) throw new Error("No criminal-law templates are configured.");
   const partyA = input.parties[0]?.name ?? "Party A";
   const partyB = input.parties[1]?.name ?? "Party B";
   const body = tmpl.skeleton
@@ -174,13 +177,14 @@ Return ONLY a JSON object with this shape:
     "memo": string
   }
 }
-The draft.body is the full instrument in plain text, suitable for execution after human review. Use NY citation form. Score < 85 if any citation is unverified or a required statute is missing.`;
+Scope restriction: handle New York criminal law and criminal procedure only. Do not answer, draft, or research family, civil, contract, employment, real-property, or other non-criminal matters. For mixed matters, address only the criminal-law issues and identify the rest as outside scope.\nThe draft.body is the full instrument in plain text, suitable for execution after human review. Use NY citation form. Score < 85 if any citation is unverified or a required statute is missing.`;
 }
 
 export const runTriad = createServerFn({ method: "POST" })
   .validator((input: CounselInput) => input)
   .handler(async ({ data }) => {
-    const tmpl = TEMPLATES.find((t) => t.id === data.templateId);
+    requireCriminalPractice(data.practice);
+    const tmpl = templateById(data.templateId ?? "");
     const user = [
       `MODE: ${data.mode}`,
       `PRACTICE: ${data.practice}`,
