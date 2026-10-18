@@ -119,7 +119,7 @@ function DraftDesk() {
           <Badge tone="associate">Instrument desk</Badge>
           <h1 className="mt-3 font-display text-3xl tracking-tight">Draft a New York criminal-law instrument</h1>
           <p className="mt-2 max-w-2xl text-sm leading-normal text-muted">
-            The Associate fills a criminal-law template using verified CPL, Penal Law, constitutional, and appellate authority. Non-criminal matters are outside scope.
+            The Associate fills a criminal-law template using verified CPL, Penal Law, constitutional, and appellate authority, plus intersecting CPLR or other law when it materially governs the criminal remedy or procedure.
           </p>
         </div>
         <Disclaimer compact />
