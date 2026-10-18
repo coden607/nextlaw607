@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input, Label, Textarea } from "@/components/ui/input";
 import { fetchNyStatute, searchOpinions } from "@/lib/courtlistener";
-import { searchCorpus } from "@/lib/corpus";
+import { searchCriminalCenteredCorpus } from "@/lib/corpus";
 import { PUBLIC_LEGAL_SOURCES, PUBLIC_SOURCE_KIND_LABEL } from "@/lib/public-sources";
 import type { ResearchHit } from "@/lib/types";
 
@@ -20,18 +20,18 @@ export const Route = createFileRoute("/research")({
 
 function Research() {
   const { q: initial } = Route.useSearch();
-  const [q, setQ] = useState(initial ?? "best interests of the child");
+  const [q, setQ] = useState(initial ?? "CPL 30.30 speedy trial");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [hits, setHits] = useState<ResearchHit[]>([]);
   const [count, setCount] = useState<number | null>(null);
   const [paste, setPaste] = useState("");
-  const [lawId, setLawId] = useState("DOM");
-  const [section, setSection] = useState("70");
+  const [lawId, setLawId] = useState("CPL");
+  const [section, setSection] = useState("30.30");
   const [statuteText, setStatuteText] = useState("");
   const [statuteErr, setStatuteErr] = useState<string | null>(null);
 
-  const corpus = useMemo(() => searchCorpus(q), [q]);
+  const corpus = useMemo(() => searchCriminalCenteredCorpus(q), [q]);
   const ingest = useMemo(() => parseIngest(paste), [paste]);
 
   async function runSearch(e?: React.FormEvent) {
@@ -50,7 +50,8 @@ function Research() {
 
   async function pullStatute() {
     setStatuteErr(null);
-    const res = await fetchNyStatute({ data: { lawId, section } });
+    const normalizedLaw = lawId.trim().toUpperCase();
+    const res = await fetchNyStatute({ data: { lawId: normalizedLaw, section } });
     if (!res.ok) {
       setStatuteErr(res.error);
       setStatuteText("");
@@ -75,7 +76,7 @@ function Research() {
         <Input
           value={q}
           onChange={(e) => setQ(e.target.value)}
-          placeholder="Eschbach, Tropea, 30.30, Hooper indemnity…"
+          placeholder="CPL 30.30, Article 245, Huntley, Mapp, Dunaway, sentencing…"
           aria-label="Research query"
         />
         <Button type="submit" disabled={busy} className="md:w-40">
@@ -200,7 +201,7 @@ function Research() {
       <section className="rounded-xl border border-border bg-surface p-5">
         <h2 className="font-display text-xl">NY Senate pull</h2>
         <p className="mt-1 text-sm text-muted">
-          Law ids: DOM (DRL), FCT (FCA), CPL, PEN, GOB (GOL), CVP (CPLR), LAB, RPP, LLC, UCC.
+          Primary sources are CPL and PEN. Other New York codes remain available when they materially intersect a criminal matter — for example CVP (CPLR) for an applicable remedy such as habeas corpus.
         </p>
         <div className="mt-3 grid gap-3 sm:grid-cols-[1fr_1fr_auto]">
           <div>

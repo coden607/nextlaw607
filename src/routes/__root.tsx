@@ -15,7 +15,7 @@ export const Route = createRootRoute({
       {
         name: "description",
         content:
-          "New York General Counsel terminal — contract drafting, DRL/FCA/CPL research, and an adversarial planner-critic-executor triad.",
+          "New York criminal-law research and drafting terminal for CPL, Penal Law, suppression, discovery, speedy trial, sentencing, appeals, and post-conviction work.",
       },
       { name: "theme-color", content: "#0a0b0c" },
     ],

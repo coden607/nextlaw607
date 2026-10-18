@@ -6,22 +6,20 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input, Label, Textarea } from "@/components/ui/input";
 import { newMatter, useCounsel } from "@/lib/store";
-import { PRACTICE_LABEL, type PracticeArea } from "@/lib/types";
+import { PRACTICE_LABEL } from "@/lib/types";
 
 export const Route = createFileRoute("/intake")({ component: Intake });
 
-const AREAS = Object.keys(PRACTICE_LABEL) as PracticeArea[];
 
 function Intake() {
   const navigate = useNavigate();
   const upsert = useCounsel((s) => s.upsertMatter);
   const [caption, setCaption] = useState("");
-  const [practice, setPractice] = useState<PracticeArea>("contracts");
   const [county, setCounty] = useState("New York");
   const [partyA, setPartyA] = useState("");
-  const [roleA, setRoleA] = useState("Client");
+  const [roleA, setRoleA] = useState("Defendant");
   const [partyB, setPartyB] = useState("");
-  const [roleB, setRoleB] = useState("Counterparty");
+  const [roleB, setRoleB] = useState("Prosecution");
   const [facts, setFacts] = useState("");
   const [objectives, setObjectives] = useState("");
 
@@ -33,7 +31,7 @@ function Intake() {
     }
     const m = newMatter({
       caption: caption.trim(),
-      practice,
+      practice: "criminal",
       county: county.trim() || "New York",
       facts: facts.trim(),
       objectives: objectives.trim(),
@@ -67,24 +65,15 @@ function Intake() {
             className="mt-1"
             value={caption}
             onChange={(e) => setCaption(e.target.value)}
-            placeholder="Avery v. Hale, or Northline LLC / contractor"
+            placeholder="People v. Defendant"
           />
         </div>
         <div className="grid gap-3 sm:grid-cols-2">
           <div>
-            <Label htmlFor="practice">Practice</Label>
-            <select
-              id="practice"
-              value={practice}
-              onChange={(e) => setPractice(e.target.value as PracticeArea)}
-              className="mt-1 h-11 w-full rounded-md border border-border bg-elevated px-3 text-sm text-fg"
-            >
-              {AREAS.map((a) => (
-                <option key={a} value={a}>
-                  {PRACTICE_LABEL[a]}
-                </option>
-              ))}
-            </select>
+            <Label>Practice</Label>
+            <div className="mt-1 flex h-11 items-center rounded-md border border-border bg-elevated px-3 text-sm text-fg">
+              {PRACTICE_LABEL.criminal}
+            </div>
           </div>
           <div>
             <Label htmlFor="county">County</Label>
@@ -122,7 +111,7 @@ function Intake() {
             className="mt-1 min-h-32"
             value={facts}
             onChange={(e) => setFacts(e.target.value)}
-            placeholder="What happened, who wants what, numbers, dates, children, charges…"
+            placeholder="Charges, dates, stop/search/arrest facts, statements, discovery, hearings, plea or trial posture…"
           />
         </div>
         <div>

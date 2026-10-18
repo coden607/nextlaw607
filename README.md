@@ -1,19 +1,19 @@
 # NextLaw607
 
-New York General Counsel terminal. It drafts instruments, harvests binding authority, and then attacks its own work as opposing counsel.
+New York criminal-law research and drafting terminal. Criminal law and criminal procedure are the primary product surfaces.
 
 Not a law firm. Not legal advice. A human New York attorney must review anything before execution or filing.
 
 ## What it does
 
-- **Instrument desk** — NY-governed templates (ICA, NDA, parenting stipulation, settlement, residential lease, LLC operating agreement, criminal defense workup) with required statutes and Court of Appeals cases wired in.
+- **Criminal instrument desk** — suppression, discovery, speedy-trial, sentencing, appellate, and post-conviction work products tied to verified criminal-law authority.
 - **Authority harvest** — CourtListener v4 opinions (NY / Appellate Division / Supreme / 2d Cir.) plus NY Senate Open Legislation pulls and a verified internal bank the critic is allowed to trust.
 - **Planner · Executor · Critic triad** — one user-initiated Grok run. Score below 85 forces rewrite. Unverified cites are rejected.
 - **Matter files** — local intake, captions, counties, parties. Nothing is a court filing.
 - **Playbook** — persona, skills, MCP gateway, and the six-step workflow.
 - **Stack** — Cole Medin’s 2026 AI-first stack mapped onto this counsel terminal.
 
-Default jurisdiction: New York. Hierarchy is Court of Appeals → the relevant Appellate Division → other departments (persuasive) → trial courts.
+Default scope: New York criminal law and criminal procedure. Intersecting authority remains available when it materially governs a criminal issue or remedy — including relevant CPLR, constitutional, DRL/FCA, administrative, and other law. Federal constitutional criminal authority is included where it governs New York criminal proceedings. Hierarchy is Court of Appeals → the relevant Appellate Division → other departments (persuasive) → trial courts, with SCOTUS/Second Circuit authority applied where controlling.
 
 ## Zero-hallucination rule
 
@@ -38,7 +38,7 @@ Server-only environment (never `VITE_`):
 | `XAI_API_KEY` | Grok counsel + optional TTS |
 | `COURTLISTENER_API_TOKEN` | Raises Free Law Project rate limits |
 
-Without a model key the desk still fills verified templates offline.
+Without a model key the desk still fills verified criminal-law templates offline.
 
 ```bash
 npm run typecheck
@@ -58,7 +58,7 @@ Pack metadata lives in `packs/nextlaw607/`.
 
 ## Disclaimer
 
-Output is a drafting aid. Binding effect depends on capacity, consideration, statutory formalities, and a licensed attorney’s review under New York law. The terminal will not pretend a PDF is filed.
+Output is a criminal-law research and drafting aid. A licensed attorney should review work before filing or relying on it. The terminal will not pretend a PDF is filed.
 
 
 ## NY Criminal / Continuity OS roadmap

@@ -82,7 +82,7 @@ export function Shell({ children }: { children: ReactNode }) {
                   holoMode && "text-cyan-400/60",
                 )}
               >
-                N.Y. General Counsel
+                N.Y. Criminal Law
               </span>
             </span>
           </Link>
@@ -154,7 +154,7 @@ export function Shell({ children }: { children: ReactNode }) {
                 holoMode && "text-cyan-400/70",
               )}
             >
-              Sovereign counsel terminal · CPL / PL / DRL 70·240 / FCA Art. 6 / GOL
+              NY criminal-law terminal · CPL · Penal Law · suppression · discovery · appeals
             </p>
             <div className="flex items-center gap-3">
               <HoloToggle className="md:hidden" />
