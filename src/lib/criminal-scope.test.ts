@@ -12,6 +12,7 @@ import {
   requireCriminalCenteredScope,
 } from "./criminal-scope.ts";
 import { CRIMINAL_TEMPLATES } from "./templates.ts";
+import type { PracticeArea } from "./types.ts";
 
 describe("criminal-centered scope", () => {
   it("keeps criminal as the primary product practice", () => {
@@ -21,12 +22,35 @@ describe("criminal-centered scope", () => {
     assert.doesNotThrow(() => requireCriminalCenteredScope("criminal"));
   });
 
-  it("allows intersecting law only with an explicit criminal nexus", () => {
-    assert.doesNotThrow(() => requireCriminalCenteredScope("civil", true));
-    assert.throws(
-      () => requireCriminalCenteredScope("family"),
-      /criminal-centered/,
-    );
+  it("allows every modeled ancillary practice area with an explicit criminal nexus", () => {
+    const ancillary: PracticeArea[] = [
+      "civil",
+      "family",
+      "contracts",
+      "real-property",
+      "employment",
+    ];
+
+    for (const practice of ancillary) {
+      assert.doesNotThrow(() => requireCriminalCenteredScope(practice, true));
+    }
+  });
+
+  it("does not promote standalone non-criminal practice", () => {
+    const ancillary: PracticeArea[] = [
+      "civil",
+      "family",
+      "contracts",
+      "real-property",
+      "employment",
+    ];
+
+    for (const practice of ancillary) {
+      assert.throws(
+        () => requireCriminalCenteredScope(practice),
+        /criminal-centered.*materially intersects a criminal matter/i,
+      );
+    }
   });
 
   it("keeps primary templates and base authority criminal", () => {
