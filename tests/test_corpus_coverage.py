@@ -6,6 +6,7 @@ from nextlaw607.corpus_coverage import (
     CorpusCoverageObservation,
     CorpusCoverageTarget,
     CoverageState,
+    coverage_report,
     coverage_summary,
     evaluate_corpus_coverage,
 )
@@ -104,3 +105,14 @@ def test_summary_and_input_validation():
         )
     with pytest.raises(ValueError, match="stale_after_days"):
         evaluate_corpus_coverage(TARGET, None, today=date(2026, 10, 21), stale_after_days=-1)
+
+
+def test_coverage_report_exposes_gaps_and_never_implies_empty_is_complete():
+    missing = evaluate_corpus_coverage(TARGET, None, today=date(2026, 10, 21))
+    report = coverage_report([missing])
+    assert report["all_complete"] is False
+    assert report["summary"]["missing"] == 1
+    assert report["targets"][0]["source_id"] == "ny-court-of-appeals"
+    assert report["targets"][0]["state"] == "missing"
+    assert report["targets"][0]["reasons"] == ["no coverage observation"]
+    assert coverage_report([])["all_complete"] is False
