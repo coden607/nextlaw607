@@ -26,3 +26,18 @@ Article I, section 12 independently.
 Use `[VERIFIED PRIMARY]`, `[VERIFIED SECONDARY]`, `[USER-SUPPLIED FACT]`,
 `[DISPUTED FACT]`, `[REASONABLE INFERENCE]`, or `[UNVERIFIED - DO NOT CITE]`.
 Never fill an evidence gap with a plausible citation or quotation.
+
+## Filing-ready legal application
+
+Research completion and filing readiness are separate states. A filing-ready criminal work product must:
+- eliminate all unresolved placeholders;
+- map each material fact to a source and uncertainty level;
+- build a verified chronology where sequence affects legality;
+- pair every material rule with the exact record facts that support or defeat it;
+- use pinpoint citations where available;
+- identify disputed facts requiring a suppression, voluntariness, probable-cause, inventory, or other hearing;
+- state the prosecution's best contrary rule, distinction, and factual theory;
+- verify local court and judge practice before filing;
+- keep internal research notes and cautionary commentary out of the filed packet unless they belong in the legal argument itself.
+
+Use status labels: `RESEARCH DRAFT`, `FACT-INCOMPLETE DRAFT`, `RECORD-SUPPORTED DRAFT`, `ATTORNEY-REVIEW READY`, and `FILING READY`. Do not use `FILING READY` while facts, exhibits, service mechanics, controlling authority, or local rules remain unverified.

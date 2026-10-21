@@ -318,3 +318,23 @@ Read `references/authority-procedure.md` for the detailed verification checklist
 - `references/authority-procedure.md` — read when researching authority, procedural vehicle, government duties, service, deadlines or filing mechanics.
 - `references/adversarial-review.md` — read before finalizing a motion, OSC, petition, opposition, appeal or other contested filing.
 - `templates/legal-work-matrix.md` — mandatory for substantial filings or multi-issue legal analysis.
+
+
+## Filing-readiness conversion gate
+
+A polished draft is not filing-ready merely because it contains the expected sections. Before labeling a criminal motion packet, memorandum, proposed order, or related filing as ready to file, complete this conversion gate:
+
+1. **Zero-placeholder gate** — no bracketed placeholders, dummy dates, generic court names, undefined parties, or unresolved service recipients may remain in a filing-ready document. If a required fact is unknown, keep the work product in DRAFT status and identify the missing fact explicitly.
+2. **Sworn-fact gate** — distinguish client-reported facts from facts established by discovery, transcripts, exhibits, BWC, photographs, laboratory records, police paperwork, court records, or other admissible proof. Do not convert an interview summary into a sworn factual assertion without confirmation.
+3. **Chronology-to-proof gate** — build a minute-by-minute or event-by-event chronology for searches, seizures, statements, sobriety testing, inventory activity, towing, medical requests, body-camera gaps, charging events, and custody transitions when those sequences matter. Tie each material event to its best source.
+4. **Rule-to-record application gate** — for every material legal proposition, state the controlling rule, cite the best authority with a pinpoint where available, identify the exact record facts that satisfy or defeat the rule, and state any disputed fact that requires a hearing.
+5. **Best-issue-first gate** — lead with the strongest dispositive or suppression issue supported by the record. Do not bury the principal theory under a long catalog of weaker alternatives.
+6. **Alternative-explanation gate** — when impairment, intent, knowledge, voluntariness, probable cause, or credibility is disputed, identify specific innocent or noncriminal explanations supported by the record (for example injury, collision effects, speech condition, medication, fatigue, pain, or environmental conditions) and connect them to the observations the prosecution relies upon.
+7. **Hearing-request gate** — identify the precise hearing or factual determination requested, the disputed facts requiring it, the burden allocation, and the relief sought if the defense prevails. Avoid generic requests for “a hearing” untethered to a live issue.
+8. **Local-practice gate** — verify assigned court/judge practice, filing method, page limits, caption format, affirmation/affidavit requirements, exhibit conventions, courtesy-copy rules, return-date mechanics, service method, and any local criminal motion rules before filing-ready status.
+9. **Pagination/exhibit gate** — ensure clean pagination, stable exhibit labels, internal cross-references, quoted record material that matches the exhibit, and an exhibit index that corresponds to the actual attachments.
+10. **Overclaiming gate** — do not treat facial-sufficiency doctrine, body-camera interruption, tow timing, inventory labels, refusal of medical care, or any other single fact as automatically dispositive unless controlling law actually makes it so. State the narrower supported proposition.
+11. **Adverse-fact gate** — surface the prosecution's strongest factual and legal answer to the lead issue, then explain why the record or controlling law defeats, limits, or distinguishes it.
+12. **Status gate** — classify the work product as one of: RESEARCH DRAFT, FACT-INCOMPLETE DRAFT, RECORD-SUPPORTED DRAFT, ATTORNEY-REVIEW READY, or FILING READY. Use FILING READY only after all required facts, authorities, exhibits, service mechanics, and local rules have been verified.
+
+For New York criminal suppression and dismissal practice, the filing-ready packet should ordinarily contain only components that materially serve the case: notice of motion or OSC if appropriate, sworn factual submission when required, memorandum or affirmation with law and application, targeted hearing requests, proposed order, exhibit index, service papers, and a separate internal verification checklist. Avoid padding the filed packet with internal notes or research commentary.
