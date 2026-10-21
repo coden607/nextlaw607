@@ -141,3 +141,26 @@ def coverage_summary(results: Iterable[CorpusCoverageResult]) -> dict[str, int]:
     for result in results:
         summary[result.state.value] += 1
     return summary
+
+
+def coverage_report(results: Iterable[CorpusCoverageResult]) -> dict[str, object]:
+    rows = []
+    materialized = tuple(results)
+    for result in materialized:
+        rows.append(
+            {
+                "source_id": result.target.source_id,
+                "jurisdiction": result.target.jurisdiction,
+                "document_class": result.target.document_class,
+                "target_start_date": result.target.start_date.isoformat(),
+                "target_end_date": result.target.end_date.isoformat() if result.target.end_date else None,
+                "state": result.state.value,
+                "coverage_ratio": result.coverage_ratio,
+                "reasons": list(result.reasons),
+            }
+        )
+    return {
+        "summary": coverage_summary(materialized),
+        "targets": rows,
+        "all_complete": bool(rows) and all(row["state"] == CoverageState.COMPLETE.value for row in rows),
+    }
