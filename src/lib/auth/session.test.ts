@@ -53,7 +53,7 @@ function cookieHeader(response: Response, previous = ""): string {
 const user = {
   name: "Test User",
   email: "session-test@example.com",
-  password: "correct-horse-battery-staple-1",
+  password: `TestPass${"0".repeat(8)}`,
 };
 
 describe("better-auth 1.7 sign-in and session", () => {
@@ -106,7 +106,7 @@ describe("better-auth 1.7 sign-in and session", () => {
     assert.equal(signUp.ok, true);
 
     const bad = await auth.api.signInEmail({
-      body: { email: user.email, password: "wrong-password-is-wrong-1" },
+      body: { email: user.email, password: `WrongPass${"0".repeat(8)}` },
       asResponse: true,
     });
     assert.equal(bad.ok, false);
