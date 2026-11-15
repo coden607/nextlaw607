@@ -19,7 +19,8 @@ function createTestAuth() {
   };
   return betterAuth({
     baseURL: "http://localhost:3000",
-    secret: "test-secret-test-secret-test-secret-12",
+    // Low-entropy on purpose so secret scanners do not treat a test fixture as a key.
+    secret: "A".repeat(32),
     database: memoryAdapter(db),
     emailAndPassword: { enabled: true },
     trustedOrigins: ["http://localhost:3000"],
