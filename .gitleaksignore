@@ -1,0 +1,4 @@
+# Test-fixture password literal in better-auth sign-up tests (commit 08950dd, PR #64).
+# Reviewed 2026-11-18: dummy fixture value in a *.test.ts file, not a production credential. No rotation needed.
+# Fingerprint-scoped: only this one finding is suppressed; any other secret still fails.
+08950dd072962aa8d2f42cc75897baff4ff57f69:src/lib/auth/session.test.ts:generic-api-key:55
