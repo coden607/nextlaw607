@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { templateById } from "./templates.ts";
 import { PRACTICE_LABEL } from "./types.ts";
 import { STATUTES, CASES, statuteById, caseById } from "./corpus.ts";
+import { litigationDirectiveFor, NY_LITIGATION_MASTER_V2 } from "./legal-litigation-directive.ts";
 
 /** Mirrors the replacement map in ai.ts fallbackTriad. */
 function renderSkeleton(skeleton: string, vars: Record<string, string>): string {
@@ -136,5 +137,38 @@ describe("criminal corpus expansion", () => {
     const caseIds = CASES.map((c) => c.id);
     assert.equal(new Set(statuteIds).size, statuteIds.length, "statute ids must be unique");
     assert.equal(new Set(caseIds).size, caseIds.length, "case ids must be unique");
+  });
+});
+
+describe("NY litigation master v2 drafting guardrails", () => {
+  it("activates for criminal practice and legally related criminal nexus only", () => {
+    assert.equal(litigationDirectiveFor("criminal"), NY_LITIGATION_MASTER_V2);
+    assert.equal(litigationDirectiveFor("civil", true), NY_LITIGATION_MASTER_V2);
+    assert.equal(litigationDirectiveFor("civil"), "");
+  });
+
+  it("requires a record, adverse law, remedies, preservation and a witness investigation gate", () => {
+    const text = NY_LITIGATION_MASTER_V2;
+    for (const marker of [
+      "CASE GATE",
+      "AUTHORITY GATE",
+      "2025 amendment versioning",
+      "DEFENSE WITNESSES",
+      "People v Lanier",
+      "People v Hoffman",
+      "ADVERSARIAL PASS",
+      "UNSUPPORTED",
+      "CPL 610.20",
+      "County Law 722-c",
+      "CPL 470.05(2)",
+      "ARTIFACT CONTRACT",
+      "ACCURACY OVERRIDE",
+    ]) {
+      assert.ok(text.includes(marker), `Required legal gate omitted: ${marker}`);
+    }
+    assert.match(text, /An unsigned proposed order is not an entered order/);
+    assert.match(text, /A complainant asking to discontinue prosecution is not automatically a recantation/);
+    assert.match(text, /token-saving or model-routing optimizations/);
+    assert.match(text, /unexecuted proof\/certificate of service/);
   });
 });

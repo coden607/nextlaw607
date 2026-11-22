@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { CASES, STATUTES, corpusPromptBlock } from "./corpus";
 import { PERSONA, skillsPromptBlock } from "./skills";
+import { litigationDirectiveFor } from "./legal-litigation-directive";
 import { CRIMINAL_TEMPLATES, templateById } from "./templates";
 import { requireCriminalCenteredScope } from "./criminal-scope";
 import type { PracticeArea, TriadResult } from "./types";
@@ -149,10 +150,12 @@ async function grokJson(system: string, user: string): Promise<string> {
   return body.choices[0]?.message.content ?? "";
 }
 
-function systemPrompt(context: string): string {
+function systemPrompt(context: string, practice: PracticeArea, criminalNexus = false): string {
   return `${PERSONA}
 
 ${skillsPromptBlock(context)}
+
+${litigationDirectiveFor(practice, criminalNexus)}
 
 ${corpusPromptBlock(context)}
 
@@ -205,7 +208,7 @@ export const runTriad = createServerFn({ method: "POST" })
       .join("\n\n");
 
     try {
-      const text = await grokJson(systemPrompt(user), user);
+      const text = await grokJson(systemPrompt(user, data.practice, data.criminalNexus ?? false), user);
       const parsed = parseTriad(extractJson(text));
       return { ok: true as const, result: parsed, offline: false };
     } catch (err) {
