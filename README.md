@@ -1,5 +1,34 @@
 # NextLaw607
 
+<!-- showcase:start -->
+**A New York criminal-law research and drafting terminal with verified-citation gates. It is not a law firm and does not give legal advice.**
+
+[![Live demo](https://img.shields.io/badge/live_demo-nextlaw607--tau.vercel.app-2ea44f?logo=vercel)](https://nextlaw607-tau.vercel.app) [![License: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
+
+![NextLaw607 live demo screenshot](docs/screenshot.png)
+
+**Live demo:** https://nextlaw607-tau.vercel.app
+
+### Highlights
+
+- Criminal-law and criminal-procedure research and drafting surfaces (CPL, Penal Law, suppression, discovery, appeals)
+- Zero-hallucination rule: citations must be verified before they appear in drafts
+- CourtListener harvest for case-law sources
+- Planner, executor and critic agent triad
+
+**Tech stack:** TanStack Start, React 19, TypeScript, Vite 8, Tailwind CSS 4, Zod, Better Auth, Vercel
+
+**Run locally:**
+
+```bash
+npm ci
+npm run dev     # http://localhost:8080
+npm test
+```
+
+<!-- showcase:end -->
+
+
 New York criminal-law research and drafting terminal. Criminal law and criminal procedure are the primary product surfaces.
 
 Not a law firm. Not legal advice. A human New York attorney must review anything before execution or filing.
